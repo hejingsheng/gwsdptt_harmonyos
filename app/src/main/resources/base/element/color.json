@@ -1,0 +1,64 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#EDEDED"
+    },
+    {
+      "name": "page_background_color",
+      "value": "#EDEDED"
+    },
+    {
+      "name": "tab_background_color",
+      "value": "#F5F5F5"
+    },
+    {
+      "name": "text_base_color",
+      "value": "#000000"
+    },
+    {
+      "name": "text_select_color",
+      "value": "#2E6FB2"
+    },
+    {
+      "name": "text_hint_color",
+      "value": "#777777"
+    },
+    {
+      "name": "top_view_color",
+      "value": "#F5F5F5"
+    },
+    {
+      "name": "colorLine2",
+      "value": "#AAAAAA"
+    },
+    {
+      "name": "colorLine",
+      "value": "#CCCCCC"
+    },
+    {
+      "name": "list_item_bg_color",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "list_item_bg_color_p",
+      "value": "#EDEDED"
+    },
+    {
+      "name": "chat_list_tag_color",
+      "value": "#EE3B3B"
+    },
+    {
+      "name": "chat_txt_from_bg_color",
+      "value": "#f6f4f4"
+    },
+    {
+      "name": "chat_txt_to_bg_color",
+      "value": "#aafa19"
+    },
+    {
+      "name": "chat_txt_color",
+      "value": "#000000"
+    }
+  ]
+}

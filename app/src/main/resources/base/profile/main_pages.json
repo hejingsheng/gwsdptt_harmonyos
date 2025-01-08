@@ -1,0 +1,11 @@
+{
+  "src": [
+    "pages/Launcher",
+    "pages/Login",
+    "pages/Main",
+    "pages/GroupDetail",
+    "pages/MemberList",
+    "pages/Chat",
+    "pages/PhotoShow"
+  ]
+}

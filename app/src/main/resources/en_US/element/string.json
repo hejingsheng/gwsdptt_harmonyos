@@ -1,0 +1,128 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "AppAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "AppAbility_label",
+      "value": "Cluster comm"
+    },
+    {
+      "name": "hint_account",
+      "value": "Account"
+    },
+    {
+      "name": "hint_password",
+      "value": "Password"
+    },
+    {
+      "name": "title_welcome",
+      "value": "Welcome to use system"
+    },
+    {
+      "name": "btn_login",
+      "value": "Login"
+    },
+    {
+      "name": "main_tab_chat",
+      "value": "Chat"
+    },
+    {
+      "name": "main_tab_grp",
+      "value": "Group"
+    },
+    {
+      "name": "main_tab_my",
+      "value": "Me"
+    },
+    {
+      "name": "title_group_detail",
+      "value": "Group Detail"
+    },
+    {
+      "name": "send_msg",
+      "value": "Send message"
+    },
+    {
+      "name": "del_msg",
+      "value": "Delete message"
+    },
+    {
+      "name": "group_announcement",
+      "value": "Group announcement"
+    },
+    {
+      "name": "half_duplex",
+      "value": "Half duplex intercom"
+    },
+    {
+      "name": "title_group_member",
+      "value": "Group Member"
+    },
+    {
+      "name": "btn_press_speak",
+      "value": "Hold to speak"
+    },
+    {
+      "name": "btn_send",
+      "value": "Send"
+    },
+    {
+      "name": "photo",
+      "value": "Photo"
+    },
+    {
+      "name": "Video",
+      "value": "Video"
+    },
+    {
+      "name": "Voice",
+      "value": "Voice"
+    },
+    {
+      "name": "pttcall",
+      "value": "PTT"
+    },
+    {
+      "name": "voicecall",
+      "value": "Voice Call"
+    },
+    {
+      "name": "videocall",
+      "value": "Video Call"
+    },
+    {
+      "name": "location",
+      "value": "Location"
+    },
+    {
+      "name": "not_connected",
+      "value": "Not connected"
+    },
+    {
+      "name": "talk_time",
+      "value": "Talk time:%1$s"
+    },
+    {
+      "name": "hint_login_succeed",
+      "value": "Login succeeded"
+    },
+    {
+      "name": "hint_login_failure",
+      "value": "Login failed"
+    },
+    {
+      "name": "hint_network_err",
+      "value": "Network error"
+    },
+    {
+      "name": "hint_loging_otherterminals",
+      "value": "Logged in on other terminals"
+    }
+  ]
+}

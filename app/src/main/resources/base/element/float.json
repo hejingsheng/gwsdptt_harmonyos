@@ -1,0 +1,100 @@
+{
+  "float": [
+    {
+      "name": "launch_logo_size",
+      "value": "120vp"
+    },
+    {
+      "name": "list_icon_size",
+      "value": "30vp"
+    },
+    {
+      "name": "list_item_height_size",
+      "value": "50vp"
+    },
+    {
+      "name": "char_list_item_height_size",
+      "value": "70vp"
+    },
+    {
+      "name": "item_size",
+      "value": "50vp"
+    },
+    {
+      "name": "line_height",
+      "value": "1vp"
+    },
+    {
+      "name": "group_icon_size",
+      "value": "80vp"
+    },
+    {
+      "name": "group_detail_title_size",
+      "value": "85vp"
+    },
+    {
+      "name": "text_size_largeXXX",
+      "value": "26vp"
+    },
+    {
+      "name": "text_size_largeX",
+      "value": "22vp"
+    },
+    {
+      "name": "text_size_normal",
+      "value": "16vp"
+    },
+    {
+      "name": "text_size_small",
+      "value": "14vp"
+    },
+    {
+      "name": "text_size_smallS",
+      "value": "12vp"
+    },
+    {
+      "name": "char_input_height",
+      "value": "35vp"
+    },
+    {
+      "name": "attach_btn_image_size",
+      "value": "40vp"
+    },
+    {
+      "name": "attach_btn_text_size",
+      "value": "60vp"
+    },
+    {
+      "name": "attach_btn_height",
+      "value": "60vp"
+    },
+    {
+      "name": "btn_send_size",
+      "value": "60vp"
+    },
+    {
+      "name": "user_icon_width",
+      "value": "30vp"
+    },
+    {
+      "name": "user_icon_height",
+      "value": "45vp"
+    },
+    {
+      "name": "chat_txt_item_max_width",
+      "value": "200vp"
+    },
+    {
+      "name": "chat_voice_item_width",
+      "value": "150vp"
+    },
+    {
+      "name": "chat_voice_item_height",
+      "value": "40vp"
+    },
+    {
+      "name": "chat_avcall_icon_size",
+      "value": "40vp"
+    }
+  ]
+}

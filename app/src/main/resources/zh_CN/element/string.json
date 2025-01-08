@@ -1,0 +1,128 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "模块描述"
+    },
+    {
+      "name": "AppAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "AppAbility_label",
+      "value": "集群通信"
+    },
+    {
+      "name": "hint_account",
+      "value": "账号"
+    },
+    {
+      "name": "hint_password",
+      "value": "密码"
+    },
+    {
+      "name": "title_welcome",
+      "value": "欢迎使用集群通信系统"
+    },
+    {
+      "name": "btn_login",
+      "value": "登陆"
+    },
+    {
+      "name": "main_tab_chat",
+      "value": "聊天"
+    },
+    {
+      "name": "main_tab_grp",
+      "value": "群组"
+    },
+    {
+      "name": "main_tab_my",
+      "value": "我"
+    },
+    {
+      "name": "title_group_detail",
+      "value": "群组详情"
+    },
+    {
+      "name": "send_msg",
+      "value": "发消息"
+    },
+    {
+      "name": "del_msg",
+      "value": "清空消息"
+    },
+    {
+      "name": "half_duplex",
+      "value": "对讲"
+    },
+    {
+      "name": "group_announcement",
+      "value": "群公告"
+    },
+    {
+      "name": "title_group_member",
+      "value": "群组成员"
+    },
+    {
+      "name": "btn_press_speak",
+      "value": "按下讲话"
+    },
+    {
+      "name": "btn_send",
+      "value": "发送"
+    },
+    {
+      "name": "photo",
+      "value": "图片"
+    },
+    {
+      "name": "Video",
+      "value": "视频"
+    },
+    {
+      "name": "Voice",
+      "value": "语音"
+    },
+    {
+      "name": "pttcall",
+      "value": "对讲呼叫"
+    },
+    {
+      "name": "voicecall",
+      "value": "语音呼叫"
+    },
+    {
+      "name": "videocall",
+      "value": "视频呼叫"
+    },
+    {
+      "name": "location",
+      "value": "位置"
+    },
+    {
+      "name": "not_connected",
+      "value": "未接通"
+    },
+    {
+      "name": "talk_time",
+      "value": "通话时长:%1$s"
+    },
+    {
+      "name": "hint_login_succeed",
+      "value": "登陆成功"
+    },
+    {
+      "name": "hint_login_failure",
+      "value": "登陆失败"
+    },
+    {
+      "name": "hint_network_err",
+      "value": "网络错误"
+    },
+    {
+      "name": "hint_loging_otherterminals",
+      "value": "其他终端登陆"
+    }
+  ]
+}

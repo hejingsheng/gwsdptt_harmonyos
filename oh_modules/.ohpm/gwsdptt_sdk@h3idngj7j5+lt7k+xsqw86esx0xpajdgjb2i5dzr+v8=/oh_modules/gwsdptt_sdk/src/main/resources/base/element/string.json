@@ -1,0 +1,12 @@
+{
+  "string": [
+    {
+      "name": "page_show",
+      "value": "page from package"
+    },
+    {
+      "name": "request_microphone",
+      "value": "Allow the application to use a microphone in recording audio scenes."
+    }
+  ]
+}

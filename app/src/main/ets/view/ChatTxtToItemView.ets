@@ -1,0 +1,48 @@
+@Component
+export struct ChatTxtToItemView {
+  private sender:string = '';
+  private content: string = '';
+
+  build() {
+    Row() {
+      Column(){
+        Text(this.sender)
+          .id('name')
+          .fontSize($r('app.float.text_size_normal'))
+          .fontColor($r('app.color.chat_txt_color'))
+          .margin({
+            right: '3vp'
+          })
+        Text(this.content)
+          .align(Alignment.Center)
+          .textAlign(TextAlign.Start)
+          .fontSize($r('app.float.text_size_normal'))
+          .fontColor($r('app.color.chat_txt_color'))
+          .backgroundColor($r('app.color.chat_txt_to_bg_color'))
+          .clip(true)
+          .borderRadius(5)
+          .padding({
+            top: '2vp',
+            bottom: '2vp',
+            left: '10vp',
+            right: '10vp'
+          })
+          .constraintSize({
+            maxWidth: $r('app.float.chat_txt_item_max_width')
+          })
+          .margin({
+            right: '5vp'
+          })
+      }
+      .alignItems(HorizontalAlign.End)
+      Image($r('app.media.user'))
+        .width($r('app.float.user_icon_width'))
+        .height($r('app.float.user_icon_height'))
+    }
+    .width('100%')
+    .height('auto')
+    .justifyContent(FlexAlign.End)
+    .alignItems(VerticalAlign.Top)
+    .backgroundColor($r('app.color.list_item_bg_color_p')) //
+  }
+}
