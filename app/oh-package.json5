@@ -6,7 +6,9 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "gwsdptt_sdk": "file:./libs/gwsdptt.har"
-  }
+    "gwsdptt_sdk": "file:./libs/gwsdptt.har",
+    "dayjs": "^1.11.13"
+  },
+  "devDependencies": {},
+  "dynamicDependencies": {}
 }
-

@@ -1,20 +1,21 @@
-import { Session } from "../service/SessionModel";
+import { MsgConversationBean } from "../db/MsgConversationBean";
+import TimeUtils from "../utils/TimeUtils"
 
 @Component
 export struct ChatListItemView {
   @State isPress: boolean = false;
-  @State session: Session = new Session(1, 0, '', 1, '', '');;
+  @State conv: MsgConversationBean = new MsgConversationBean(0, '', 0, 0, '', 0, 0, 0, '', 0, '', 0);
   build() {
     RelativeContainer() {
       Badge({
-        count: this.session.unread,
+        count: this.conv.msgUnReadCnt,
         position: BadgePosition.RightTop,
         style: {
           badgeSize: 12,
           badgeColor: $r('app.color.chat_list_tag_color')
         }
       }){
-        Image(this.session.type == 0? $r('app.media.ic_member_online_blue'):$r('app.media.ic_group_p_blue'))
+        Image(this.conv.convType == 0? $r('app.media.ic_member_online_blue'):$r('app.media.ic_group_p_blue'))
           .alignRules({
             center: {anchor: '__container__', align: VerticalAlign.Center},
             middle: { anchor: '__container__', align: HorizontalAlign.Center }
@@ -29,7 +30,7 @@ export struct ChatListItemView {
       .alignRules({
         center: {anchor: '__container__', align: VerticalAlign.Center},
       })
-      Text(this.session.name)
+      Text(this.conv.convNm)
         .id('sessname')
         .height('auto')
         .fontSize($r('app.float.text_size_normal'))
@@ -47,7 +48,7 @@ export struct ChatListItemView {
         .margin({
           left: '18vp'
         })
-      Text(this.session.lastmsg)
+      Text(this.conv.lastMsgContent)
         .id('groupid')
         .height('auto')
         .fontWeight(FontWeight.Normal)
@@ -67,7 +68,7 @@ export struct ChatListItemView {
           top: '2vp',
           left: '20vp'
         })
-      Text(this.session.lastmsgts)
+      Text(TimeUtils.formatDateTime(this.conv.lastMsgTime*1000))
         .height('auto')
         .fontWeight(FontWeight.Normal)
         .fontSize($r('app.float.text_size_smallS'))
