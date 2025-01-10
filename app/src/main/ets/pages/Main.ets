@@ -2,7 +2,7 @@ import * as TopView from '../view/TopView'
 import { ChatListView } from './ChatList';
 import { GroupListView } from './GroupList';
 import { MeView } from './Me';
-import { common, UIAbility } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import AppAbility from '../appability/AppAbility';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { OfflineEventBean } from '../service/OfflineEventBean';
@@ -10,9 +10,10 @@ import { promptAction } from '@kit.ArkUI';
 
 class tabBarItem {
   normalImg?: Resource;
-  selectImg?: Resource
-  txt?: ResourceStr
-  index: number = 0
+  selectImg?: Resource;
+  txt?: ResourceStr;
+  index: number = 0;
+  flag: boolean = false;
 }
 
 @Entry
@@ -23,6 +24,7 @@ struct Main {
   @State viewItem: TopView.ViewItem = new TopView.ViewItem($r('app.string.main_tab_chat'));
   @State showRight: boolean = false;
   @State rotateVal: number = 0;
+  @State unReadMsgNum: number = 0;
   private tabController: TabsController = new TabsController();
   private ctx:common.UIAbilityContext|undefined;
   private timer:number = 0;
@@ -32,6 +34,7 @@ struct Main {
   }
 
   aboutToAppear(): void {
+    hilog.info(0x0000, 'GWAPP1', 'aboutToAppear');
     this.ctx = getContext(this) as common.UIAbilityContext;
     this.ctx.eventHub.on('login', (result:number)=>{
       if (result === 0) {
@@ -64,6 +67,18 @@ struct Main {
     });
   }
 
+  onPageShow(): void {
+    hilog.info(0x0000, 'GWAPP1', 'onpageshow');
+  }
+
+  onPageHide(): void {
+    hilog.info(0x0000, 'GWAPP1', 'onPageHide');
+  }
+
+  aboutToDisappear(): void {
+    hilog.info(0x0000, 'GWAPP1', 'aboutToDisappear');
+  }
+
   private start(): void {
     this.timer = setInterval(()=>{
       this.rotateVal += 10;
@@ -82,11 +97,31 @@ struct Main {
 
   @Builder tabBarBuild(item: tabBarItem) {
     Column() {
-      Image(this.currendIndex === item.index? item.selectImg:item.normalImg)
+      if (!item.flag) {
+        Image(this.currendIndex === item.index ? item.selectImg : item.normalImg)
+          .width(25)
+          .height(25)
+        Text(item.txt)
+          .fontColor(this.currendIndex === item.index ? $r('app.color.text_select_color') :
+          $r('app.color.text_base_color'))
+      }
+      else {
+        Badge({
+          count: this.unReadMsgNum,
+          position: BadgePosition.RightTop,
+          style: {
+            badgeSize: 12,
+            badgeColor: $r('app.color.chat_list_tag_color')
+          }
+        }){
+          Image(this.currendIndex === item.index ? item.selectImg : item.normalImg)
+        }
         .width(25)
         .height(25)
-      Text(item.txt)
-        .fontColor(this.currendIndex === item.index ? $r('app.color.text_select_color') : $r('app.color.text_base_color'))
+        Text(item.txt)
+          .fontColor(this.currendIndex === item.index ? $r('app.color.text_select_color') :
+          $r('app.color.text_base_color'))
+      }
     }
     .width('100%')
     .height(50)
@@ -112,13 +147,14 @@ struct Main {
       }
       Tabs({ barPosition: BarPosition.End, controller: this.tabController }) {
         TabContent() {
-          ChatListView();
+          ChatListView({allUnReadMsgNum:this.unReadMsgNum});
         }
         .tabBar(this.tabBarBuild({
           normalImg: $r('app.media.ic_main_tab_chat_day'),
           selectImg: $r('app.media.ic_main_tab_chat_p'),
           txt: $r('app.string.main_tab_chat'),
-          index: 0
+          index: 0,
+          flag:true
         }))
 
         TabContent() {
@@ -128,7 +164,8 @@ struct Main {
           normalImg: $r('app.media.ic_main_tab_grp_day'),
           selectImg: $r('app.media.ic_main_tab_grp_p'),
           txt: $r('app.string.main_tab_grp'),
-          index: 1
+          index: 1,
+          flag:false
         }))
 
         TabContent() {
@@ -138,7 +175,8 @@ struct Main {
           normalImg: $r('app.media.ic_main_tab_me_day'),
           selectImg: $r('app.media.ic_main_tab_me_p'),
           txt: $r('app.string.main_tab_my'),
-          index: 2
+          index: 2,
+          flag:false
         }))
       }
       .id('tabitem')

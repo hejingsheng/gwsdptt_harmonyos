@@ -123,6 +123,14 @@
     {
       "name": "hint_loging_otherterminals",
       "value": "其他终端登陆"
+    },
+    {
+      "name": "hint_exploit_ing",
+      "value": "开发中..."
+    },
+    {
+      "name": "hint_notPermission",
+      "value": "无权限"
     }
   ]
 }

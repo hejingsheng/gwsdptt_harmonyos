@@ -1,3 +1,4 @@
+@Observed
 export class MsgConversationBean {
   public id:number;
   public loginUid:string;
@@ -27,7 +28,5 @@ export class MsgConversationBean {
     this.lastMsgContent = lastMsgContent;
     this.lastMsgTime = lastMsgTime;
   }
-
-
 
 }

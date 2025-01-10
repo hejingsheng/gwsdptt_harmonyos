@@ -10,6 +10,15 @@ export class ChatParam {
   }
 }
 
+export class ChatTime {
+  public id:string = 'time';
+  public time:number = 0;
+
+  constructor(time: number) {
+    this.time = time;
+  }
+}
+
 export class ChatMsg {
   public id:number = 0;
   public senderId:string = '';
@@ -35,6 +44,5 @@ export class ChatMsg {
     this.playtime = playtime;
     this.time = time;
   }
-
 
 }

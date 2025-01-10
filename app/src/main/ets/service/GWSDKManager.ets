@@ -2,9 +2,11 @@ import {
   GWCurrentGroupNotifyBean,
   GWKickoutNotifyBean,
   GWMemberInfoBean,
+  GWMsgBaseBean,
   GWMsgBean,
   gwsdPttSdk,
-  MemberInfo } from 'gwsdptt_sdk'
+  MemberInfo,
+  MsgContent} from 'gwsdptt_sdk'
 import { GWLoginResultBean } from 'gwsdptt_sdk';
 import { GWGroupBean, GWGroupListBean } from 'gwsdptt_sdk';
 import { GWJoinGroupBean } from 'gwsdptt_sdk';
@@ -16,6 +18,10 @@ import { systemDateTime } from '@kit.BasicServicesKit';
 import { GWPttUserInfo } from './GWPttUserInfo';
 import { HashMap, JSON, List } from '@kit.ArkTS';
 import { OfflineEventBean } from './OfflineEventBean';
+import * as MsgDB from "../db/MsgDB"
+import { getRDB } from "../db/DBManager"
+import { MsgContentBean } from '../db/MsgContentBean';
+import { MsgConversationBean } from '../db/MsgConversationBean';
 
 export interface GWSDKPttEngngObserer {
   onPttEvent: (event: number, data: string, data1: number) => void;
@@ -150,6 +156,46 @@ export class GWSDKManager {
       gwsdPttSdk.pttRegOfflineMsg(gidArray, typeArray, num, 0);
       this.haveStartMsgService = true;
     }
+  }
+
+  public createMsgBean1(sendId: string, sendNm: string, recvtype: number, remoteid: string, remotenm: string, msgtype: number) : GWMsgBean {
+    let gwMsgBean:GWMsgBean = new GWMsgBean();
+    gwMsgBean.from = sendId;
+    gwMsgBean.type = msgtype;
+    let ts = systemDateTime.getTime(false)/1000;
+    gwMsgBean.time = ts;
+    let msg:MsgContent = new MsgContent();
+    msg.content = '';
+    msg.sendId = sendId;
+    msg.sendName = sendNm;
+    msg.sendUType = GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER;
+    msg.receiveId = remoteid;
+    msg.receiveName = remotenm;
+    msg.receiveUType = recvtype;
+    msg.time = ts;
+    msg.msgType = msgtype;
+    gwMsgBean.data = msg;
+    return gwMsgBean;
+  }
+
+  public createMsgBean(recvtype:number, remoteid: number, remotenm: string, msgtype: number) : GWMsgBean {
+    let gwMsgBean:GWMsgBean = new GWMsgBean();
+    gwMsgBean.from = this.userInfo.id.toString();
+    gwMsgBean.type = msgtype;
+    let ts = systemDateTime.getTime(false)/1000;
+    gwMsgBean.time = ts;
+    let msg:MsgContent = new MsgContent();
+    msg.content = '';
+    msg.sendId = this.userInfo.id.toString();
+    msg.sendName = this.userInfo.name;
+    msg.sendUType = GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER;
+    msg.receiveId = remoteid.toString();
+    msg.receiveName = remotenm;
+    msg.receiveUType = recvtype;
+    msg.time = ts;
+    msg.msgType = msgtype;
+    gwMsgBean.data = msg;
+    return gwMsgBean;
   }
 
   public sendMsg(msg: GWMsgBean) {
@@ -394,7 +440,34 @@ export class GWSDKManager {
   }
 
   private onMsgEvent(status:number, msg:string, length:number) {
-    //this.log('recv msg status=' + status + ' data=' + msg);
+    this.log('recv msg status=' + status);
+    if (status === GWType.GW_MSG_STATUS.GW_MSG_STATUS_ERROR) {
+      this.haveStartMsgService = false;
+    }
+    if (status === GWType.GW_MSG_STATUS.GW_MSG_STATUS_DATA) {
+      let json = JSON.parse(msg);
+      let gwMsgBaseBean: GWMsgBaseBean = (json as GWMsgBaseBean);
+      if (gwMsgBaseBean.type == GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT
+        || gwMsgBaseBean.type == GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO
+        || gwMsgBaseBean.type == GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE
+        || gwMsgBaseBean.type == GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO) {
+        this.log('recv msg data');
+        if (gwMsgBaseBean.from === this.userInfo.id.toString()) {
+          this.log('recv self msg data drop it');
+        }
+        else {
+          let gwMsgBean: GWMsgBean = (json as GWMsgBean);
+          MsgDB.saveMsgContent(getRDB(), this.userInfo.id.toString(), gwMsgBean)
+            .then((msg:MsgContentBean) => {
+              MsgDB.saveOrUpdateConv(getRDB(), msg, false)
+                .then((conv:MsgConversationBean) => {
+                  this.context?.eventHub.emit('recvmsg', msg);
+                  this.context?.eventHub.emit('recvconv', conv);
+              });
+          });
+        }
+      }
+    }
   }
 
   private timerId:number = 0;

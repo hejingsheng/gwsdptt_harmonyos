@@ -1,71 +1,94 @@
 import { Session } from '../service/SessionModel';
 import * as TopView from '../view/TopView'
-import { router } from '@kit.ArkUI';
-import { ChatMsg, ChatParam } from '../service/ChatModel';
+import { promptAction, router } from '@kit.ArkUI';
+import { ChatMsg, ChatParam, ChatTime } from '../service/ChatModel';
 import { ChatInputView } from '../view/ChatInputView';
 import { ChatTxtToItemView } from '../view/ChatTxtToItemView';
 import { ChatTxtFromItemView } from '../view/ChatTxtFromItemView';
 import { ChatVideoPhotoToItemView } from '../view/ChatVideoPhotoToItemView';
-import { faceDetector } from '@kit.CoreVisionKit';
 import { ChatVideoPhotoFromItemView } from '../view/ChatVideoPhotoFromItemView';
 import { ChatAVCallToItemView } from '../view/ChatAVCallToItem';
 import { ChatAVCallFromItemView } from '../view/ChatAVCallFromItem';
 import { ChatVoiceToItemView } from '../view/ChatVoiceToItem';
 import { ChatVoiceFromItemView } from '../view/ChatVoiceFromItem';
 import { ChatInputViewEvent } from '../view/ChatInputView'
+import * as MsgDB from "../db/MsgDB"
+import { getRDB } from "../db/DBManager"
+import { GWSDKManager } from '../service/GWSDKManager';
+import { MsgContentBean } from '../db/MsgContentBean';
+import { GWMsgBean, GWType } from 'gwsdptt_sdk';
+import TimeUtils from "../utils/TimeUtils"
+import { common } from '@kit.AbilityKit';
+import { MsgConversationBean } from '../db/MsgConversationBean';
 
-class InputViewEvent implements ChatInputViewEvent {
-  onStartVoice(): void {
-    console.log('start voice');
-  }
-
-  onStopVoice(): void {
-    console.log('stop voice');
-  }
-
-  onCancelVoice(): void {
-    console.log('cancel voice');
-  }
-
-  onSendTxt(value: string): void {
-    console.log('request send msg:'+value);
-  }
-
-  onPhoto(): void {
-    console.log('open photo');
-  }
-
-  onVideo(): void {
-    console.log('open video');
-  }
-
-  onLocation(): void {
-    console.log('location');
-  }
-
-  onPttCall(): void {
-    console.log('ptt call');
-  }
-
-  onVoiceCall(): void {
-    console.log('voice call');
-  }
-
-  onVideoCall(): void {
-    console.log('video call');
-  }
-}
+const CHATTING_TIME_SPACE = 120;
 
 @Entry
 @Component
 struct Chat {
-  private chatMsgList :ChatMsg[] = [];
+  @State chatMsgArr :Array<object> = [];
   @State viewItem: TopView.ViewItem = new TopView.ViewItem('');
   private charparam :ChatParam = new ChatParam(0, 0, '');
   private chatlistScroller: Scroller = new Scroller();
   private timer:number = 0;
+  private ctx:common.UIAbilityContext|undefined;
 
-  private chatinputevent:InputViewEvent = new InputViewEvent();
+  private getUid() : string {
+    return GWSDKManager.getInstance().getUserInfo().id.toString();
+  }
+
+  private addMessageList(msglist:MsgContentBean[]) {
+    if (msglist.length > 0) {
+      for (let msglistElement of msglist) {
+        if (this.chatMsgArr.length === 0) {
+          this.chatMsgArr.push(new ChatTime(msglistElement.time));
+          this.chatMsgArr.push(new ChatMsg(msglistElement.id, msglistElement.senderId, msglistElement.senderNm,
+            msglistElement.senderType, msglistElement.msgType, msglistElement.content,
+            msglistElement.url, msglistElement.thumburl, msglistElement.playtime, msglistElement.time));
+        }
+        else {
+          let lastMsg = this.chatMsgArr[this.chatMsgArr.length-1] as ChatMsg;
+          if (msglistElement.time - lastMsg.time > CHATTING_TIME_SPACE) {
+            this.chatMsgArr.push(new ChatTime(msglistElement.time));
+            this.chatMsgArr.push(new ChatMsg(msglistElement.id, msglistElement.senderId, msglistElement.senderNm,
+              msglistElement.senderType, msglistElement.msgType, msglistElement.content,
+              msglistElement.url, msglistElement.thumburl, msglistElement.playtime, msglistElement.time));
+          }
+          else {
+            this.chatMsgArr.push(new ChatMsg(msglistElement.id, msglistElement.senderId, msglistElement.senderNm,
+              msglistElement.senderType, msglistElement.msgType, msglistElement.content,
+              msglistElement.url, msglistElement.thumburl, msglistElement.playtime, msglistElement.time));
+          }
+        }
+      }
+    }
+    this.ctx = getContext(this) as common.UIAbilityContext;
+    this.ctx.eventHub.on('recvmsg', (msg: MsgContentBean) => {
+      this.addMessage(msg);
+    })
+  }
+
+  private addMessage(msg:MsgContentBean) {
+    if (this.chatMsgArr.length === 0) {
+      this.chatMsgArr.push(new ChatTime(msg.time));
+      this.chatMsgArr.push(new ChatMsg(msg.id, msg.senderId, msg.senderNm,
+        msg.senderType, msg.msgType, msg.content,
+        msg.url, msg.thumburl, msg.playtime, msg.time));
+      return;
+    }
+    let lastMsg = this.chatMsgArr[this.chatMsgArr.length-1] as ChatMsg;
+    if (msg.time - lastMsg.time > CHATTING_TIME_SPACE) {
+      this.chatMsgArr.push(new ChatTime(msg.time));
+      this.chatMsgArr.push(new ChatMsg(msg.id, msg.senderId, msg.senderNm,
+        msg.senderType, msg.msgType, msg.content,
+        msg.url, msg.thumburl, msg.playtime, msg.time));
+    }
+    else {
+      this.chatMsgArr.push(new ChatMsg(msg.id, msg.senderId, msg.senderNm,
+        msg.senderType, msg.msgType, msg.content,
+        msg.url, msg.thumburl, msg.playtime, msg.time));
+    }
+  }
 
   aboutToAppear(): void {
     if (router.getParams() != undefined && router.getParams() != null) {
@@ -73,33 +96,16 @@ struct Chat {
       this.charparam = param;
       this.viewItem = new TopView.ViewItem(this.charparam.convNm)
     }
-    this.chatMsgList[0] = new ChatMsg(0, '1', 'user1', 0, 1103, 'hello', '', '', 0, 1735286634);
-    this.chatMsgList[1] = new ChatMsg(0, '1', 'user1', 0, 1103, 'hello', '', '', 0, 1735286634);
-    this.chatMsgList[2] = new ChatMsg(1, '2', 'user2', 0, 1, '89', '', '', 0, 1735286644);
-    this.chatMsgList[3] = new ChatMsg(2, '1', 'user1', 0, 1104, '', 'http://chn-gwsd-fs-ex.hawk-sight.com:8790/group2/M00/31/31/o4YBAGb1NGaAKpZiAAdJJ4jMa8M087.jpg', '', 0, 1735286654);
-    this.chatMsgList[4] = new ChatMsg(3, '2', 'user2', 0, 1103, 'hi', '', '', 0, 1735286664);
-    this.chatMsgList[5] = new ChatMsg(4, '1', 'user1', 0, 1, '78', '', '', 0, 1735286674);
-    this.chatMsgList[6] = new ChatMsg(5, '2', 'user2', 0, 1105, '', '', 'http://chn-gwsd-fs-ex.hawk-sight.com:8790/group2/M00/31/31/o4YBAGb1NGaAKpZiAAdJJ4jMa8M087.jpg', 0, 1735286684);
-    this.chatMsgList[7] = new ChatMsg(6, '1', 'user1', 0, 1103, 'hello', '', '', 0, 1735286694);
-    this.chatMsgList[8] = new ChatMsg(7, '2', 'user2', 0, 1105, '', '', 'http://chn-gwsd-fs-ex.hawk-sight.com:8790/group2/M00/31/31/o4YBAGb1NGaAKpZiAAdJJ4jMa8M087.jpg', 0, 1735286704);
-    this.chatMsgList[9] = new ChatMsg(8, '1', 'user1', 0, 1103, 'hello', '', '', 0, 1735286714);
-    this.chatMsgList[10] = new ChatMsg(9, '1', 'user1', 0, 1104, '', 'http://chn-gwsd-fs-ex.hawk-sight.com:8790/group2/M00/31/31/o4YBAGb1NGaAKpZiAAdJJ4jMa8M087.jpg', '', 0, 1735286724);
-    this.chatMsgList[11] = new ChatMsg(10, '2', 'user2', 0, 0, '0', '', '', 0, 1735286734);
-    this.chatMsgList[12] = new ChatMsg(11, '2', 'user2', 0, 0, '55', '', '', 0, 1735286744);
-    this.chatMsgList[13] = new ChatMsg(12, '1', 'user1', 0, 0, '0', '', '', 0, 1735286754);
-    this.chatMsgList[14] = new ChatMsg(13, '1', 'user1', 0, 0, '103', '', '', 0, 1735286764);
-    this.chatMsgList[15] = new ChatMsg(14, '2', 'user2', 0, 1103, '哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈', '', '', 0, 1735286774);
-    this.chatMsgList[16] = new ChatMsg(15, '1', 'user1', 0, 1103, '哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈', '', '', 0, 1735286784);
-    this.chatMsgList[17] = new ChatMsg(16, '2', 'user2', 0, 1103, '哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈', '', '', 0, 1735286794);
-    this.chatMsgList[18] = new ChatMsg(17, '2', 'user2', 0, 1106, '', '', '', 0, 1735286804);
-    this.chatMsgList[19] = new ChatMsg(18, '1', 'user1', 0, 1106, '', '', '', 0, 1735286814);
-    this.chatMsgList[20] = new ChatMsg(19, '1', 'user1', 0, 1103, '好好好好好好好好好好好好好好好好好好好好好好好好好好好好', '', '', 0, 1735286824);
-    this.chatMsgList[21] = new ChatMsg(20, '1', 'user1', 0, 1, '0', '', '', 0, 1735286834);
+    MsgDB.queryChatRecord(getRDB(), this.getUid(), this.charparam.convId, this.charparam.convType, 0, 30)
+      .then((list:MsgContentBean[]) => {
+        this.addMessageList(list);
+      });
+    MsgDB.updateConvRead(getRDB(), this.getUid(), this.charparam.convId, this.charparam.convType);
   }
 
   onPageShow(): void {
     this.timer = setInterval(()=>{
-      this.chatlistScroller.scrollToIndex(6, true);
+      //this.chatlistScroller.scrollToIndex(6, true);
       clearInterval(this.timer)
     }, 300);
   }
@@ -121,40 +127,62 @@ struct Chat {
             align: VerticalAlign.Top
           }
         })
-      List({scroller: this.chatlistScroller}) {
-        ForEach(this.chatMsgList, (item : ChatMsg)=>{
+      List({scroller: this.chatlistScroller, space: '5vp'}) {
+        ForEach(this.chatMsgArr, (item : object)=>{
           ListItem() {
-            if (item.senderId === '1') {
-              if (item.msgType === 1103) {
-                ChatTxtToItemView({ sender: item.senderNm, content: item.content });
-              } else if (item.msgType === 1104) {
-                ChatVideoPhotoToItemView({ sender: item.senderNm, url: item.url, video: false});
-              } else if (item.msgType === 1105) {
-                ChatVideoPhotoToItemView({ sender: item.senderNm, url: item.url, thumburl: item.thumburl, video: true});
-              } else if (item.msgType === 1106) {
-                ChatVoiceToItemView({ sender: item.senderNm, url: item.url });
-              } else if (item.msgType === 0) {
-                ChatAVCallToItemView({ sender: item.senderNm, time: item.content, video: false});
-              } else if (item.msgType === 1) {
-                ChatAVCallToItemView({ sender: item.senderNm, time: item.content, video: true});
-              }
+            if (item instanceof ChatTime) {
+              Text(TimeUtils.formatDateTime(item.time*1000, 'YYYY-MM-DD HH:mm'))
+                .width('100%')
+                .height('auto')
+                .fontSize($r('app.float.text_size_small'))
+                .alignSelf(ItemAlign.Center)
+                .textAlign(TextAlign.Center)
+                .padding({
+                  top:'5vp',
+                  bottom:'5vp'
+                })
+                .fontColor($r('app.color.text_timer_color'))
             } else {
-              if (item.msgType === 1103) {
-                ChatTxtFromItemView({ sender: item.senderNm, content: item.content });
-              } else if (item.msgType === 1104) {
-                ChatVideoPhotoFromItemView({ sender: item.senderNm, url: item.url, video: false});
-              } else if (item.msgType === 1105) {
-                ChatVideoPhotoFromItemView({ sender: item.senderNm, url: item.url, thumburl: item.thumburl, video: true});
-              } else if (item.msgType === 1106) {
-                ChatVoiceFromItemView({ sender: item.senderNm, url: item.url });
-              } else if (item.msgType === 0) {
-                ChatAVCallFromItemView({ sender: item.senderNm, time: item.content, video: false});
-              } else if (item.msgType === 1) {
-                ChatAVCallFromItemView({ sender: item.senderNm, time: item.content, video: true});
+              if ((item as ChatMsg).senderId === this.getUid()) {
+                if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {
+                  ChatTxtToItemView({ sender: (item as ChatMsg).senderNm, content: (item as ChatMsg).content });
+                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO) {
+                  ChatVideoPhotoToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, video: false});
+                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO) {
+                  ChatVideoPhotoToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, thumburl: (item as ChatMsg).thumburl, video: true});
+                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE) {
+                  ChatVoiceToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url });
+                } else if ((item as ChatMsg).msgType === 0) {
+                  ChatAVCallToItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: false});
+                } else if ((item as ChatMsg).msgType === 1) {
+                  ChatAVCallToItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: true});
+                }
+              } else {
+                if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {
+                  ChatTxtFromItemView({ sender: (item as ChatMsg).senderNm, content: (item as ChatMsg).content });
+                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO) {
+                  ChatVideoPhotoFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, video: false});
+                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO) {
+                  ChatVideoPhotoFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, thumburl: (item as ChatMsg).thumburl, video: true});
+                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE) {
+                  ChatVoiceFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url });
+                } else if ((item as ChatMsg).msgType === 0) {
+                  ChatAVCallFromItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: false});
+                } else if ((item as ChatMsg).msgType === 1) {
+                  ChatAVCallFromItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: true});
+                }
               }
             }
           }
-        },(item: ChatMsg) => item.id.toString())
+        },(item: object) => {
+          if (item instanceof ChatTime) {
+            let a = item as ChatTime;
+            return a.id+'_'+a.time
+          } else {
+            let a = item as ChatMsg;
+            return a.id.toString();
+          }
+        })
       }
       .width('100%')
       .alignRules({
@@ -167,7 +195,59 @@ struct Chat {
           align: VerticalAlign.Top
         }
       })
-      ChatInputView({inputViewEvent:this.chatinputevent})
+      ChatInputView({inputViewEvent: {
+        onStartVoice:() => {
+
+        },
+        onStopVoice:() => {
+
+        },
+        onCancelVoice:() => {
+
+        },
+        onSendTxt: (value: string) => {
+          if (!GWSDKManager.getInstance().hasMsgPermission()) {
+            promptAction.showToast({
+              message:$r('app.string.hint_notPermission'),
+              duration:2000
+            });
+            return;
+          }
+          let gwMsgBean:GWMsgBean = GWSDKManager.getInstance().createMsgBean(this.charparam.convType, this.charparam.convId,
+            this.charparam.convNm, GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT);
+          gwMsgBean.data.content = value;
+          GWSDKManager.getInstance().sendMsg(gwMsgBean);
+          MsgDB.saveMsgContent(getRDB(), this.getUid(), gwMsgBean)
+            .then((msg:MsgContentBean) => {
+              MsgDB.saveOrUpdateConv(getRDB(), msg, false)
+                .then((conv:MsgConversationBean) => {
+                  this.addMessage(msg);
+                  this.ctx?.eventHub.emit('recvconv', conv);
+                });
+            });
+        },
+        onPhoto:() => {
+
+        },
+        onVideo:() => {
+
+        },
+        onLocation:() => {
+
+        },
+        onPttCall:() => {
+
+        },
+        onVoiceCall:() => {
+
+        },
+        onVideoCall:() => {
+          promptAction.showToast({
+            message:$r('app.string.hint_login_failure'),
+            duration:2000
+          });
+        }
+      }})
         .id('inputview')
         .width('100%')
         .height('auto')
@@ -180,5 +260,6 @@ struct Chat {
     }
     .height('100%')
     .width('100%')
+    .backgroundColor($r('app.color.page_background_color'))
   }
 }

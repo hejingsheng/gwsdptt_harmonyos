@@ -1,10 +1,14 @@
 import { MsgConversationBean } from "../db/MsgConversationBean";
+import { ChatParam } from "../service/ChatModel";
 import TimeUtils from "../utils/TimeUtils"
+import { router } from "@kit.ArkUI";
 
 @Component
 export struct ChatListItemView {
   @State isPress: boolean = false;
-  @State conv: MsgConversationBean = new MsgConversationBean(0, '', 0, 0, '', 0, 0, 0, '', 0, '', 0);
+  //@State conv: MsgConversationBean = new MsgConversationBean(0, '', 0, 0, '', 0, 0, 0, '', 0, '', 0);
+  @ObjectLink conv: MsgConversationBean;
+  @Link allUnReadMsgnum:number;
   build() {
     RelativeContainer() {
       Badge({
@@ -68,7 +72,7 @@ export struct ChatListItemView {
           top: '2vp',
           left: '20vp'
         })
-      Text(TimeUtils.formatDateTime(this.conv.lastMsgTime*1000))
+      Text(TimeUtils.formatDateTime(this.conv.lastMsgTime*1000, 'YYYY-MM-DD HH:mm:ss'))
         .height('auto')
         .fontWeight(FontWeight.Normal)
         .fontSize($r('app.float.text_size_smallS'))
@@ -96,6 +100,15 @@ export struct ChatListItemView {
       } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
         this.isPress = false;
       }
+    })
+    .onClick(()=>{
+      this.allUnReadMsgnum -= this.conv.msgUnReadCnt;
+      this.conv.msgUnReadCnt = 0;
+      let chatparam = new ChatParam(this.conv.convId, this.conv.convType, this.conv.convNm)
+      router.pushUrl({
+        url: 'pages/Chat',
+        params: chatparam
+      })
     })
   }
 }

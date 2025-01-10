@@ -22,10 +22,10 @@ export struct ChatTxtToItemView {
           .clip(true)
           .borderRadius(5)
           .padding({
-            top: '2vp',
-            bottom: '2vp',
-            left: '10vp',
-            right: '10vp'
+            top: '10vp',
+            bottom: '10vp',
+            left: '12vp',
+            right: '12vp'
           })
           .constraintSize({
             maxWidth: $r('app.float.chat_txt_item_max_width')

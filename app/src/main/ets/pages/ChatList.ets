@@ -1,36 +1,81 @@
 import { ChatListItemView } from "../view/ChatListItemView";
-import { ChatParam } from "../service/ChatModel";
-import { router } from "@kit.ArkUI";
-import * as MsgConversationDB from "../db/MsgConversationDB"
+import * as MsgDB from "../db/MsgDB"
 import { getRDB } from "../db/DBManager"
 import { GWSDKManager } from "../service/GWSDKManager";
 import { MsgConversationBean } from "../db/MsgConversationBean";
+import { hilog } from "@kit.PerformanceAnalysisKit";
+import { common } from "@kit.AbilityKit";
 
 @Component
 export struct ChatListView {
   @State message: string = 'chatlist';
-  private conversations :Array<MsgConversationBean> = [];
+  @State conversations :Array<MsgConversationBean> = [];
+  @Link allUnReadMsgNum:number;
+  private ctx:common.UIAbilityContext|undefined;
+
+  private getUid() : string {
+    return GWSDKManager.getInstance().getUserInfo().id.toString();
+  }
+
+  private calcAllUnReadMsg() {
+    let num = 0;
+    for (let conversationsElement of this.conversations) {
+      num += conversationsElement.msgUnReadCnt;
+    }
+    this.allUnReadMsgNum = num;
+  }
 
   aboutToAppear(): void {
-    MsgConversationDB.queryConvList(getRDB(),GWSDKManager.getInstance().getUserInfo().id.toString())
+    hilog.info(0x0000, 'GWAPP', 'aboutToAppear');
+    MsgDB.queryConvList(getRDB(), this.getUid())
       .then((list:MsgConversationBean[]) => {
         this.conversations = list;
-      })
+        this.conversations.sort((a:MsgConversationBean, b:MsgConversationBean) => {
+          return b.lastMsgTime - a.lastMsgTime;
+        });
+        this.calcAllUnReadMsg();
+      });
+    this.ctx = getContext(this) as common.UIAbilityContext;
+    this.ctx.eventHub.on('recvconv', (conv: MsgConversationBean) => {
+      if (conv.id === -1) {
+        this.conversations.push(conv);
+        this.conversations.sort((a:MsgConversationBean, b:MsgConversationBean) => {
+          return b.lastMsgTime - a.lastMsgTime;
+        });
+      }
+      else {
+        for (let i = 0; i < this.conversations.length; i++) {
+          if (this.conversations[i].id === conv.id) {
+            this.conversations[i].lastMsgId = conv.lastMsgId;
+            this.conversations[i].lastMsgSenderNm = conv.lastMsgSenderNm;
+            this.conversations[i].lastMsgType = conv.lastMsgType;
+            this.conversations[i].lastMsgContent = conv.lastMsgContent;
+            this.conversations[i].lastMsgTime = conv.lastMsgTime;
+            this.conversations[i].msgUnReadCnt = conv.msgUnReadCnt;
+          }
+        }
+        this.conversations.sort((a:MsgConversationBean, b:MsgConversationBean) => {
+          return b.lastMsgTime - a.lastMsgTime;
+        });
+      }
+      this.calcAllUnReadMsg();
+      // MsgDB.queryConvList(getRDB(), this.getUid())
+      //   .then((list:MsgConversationBean[]) => {
+      //     //this.conversations = list;
+      //   })
+    })
+  }
+
+  aboutToDisappear(): void {
+    hilog.info(0x0000, 'GWAPP', 'aboutToDisappear');
   }
 
   build() {
     List() {
       ForEach(this.conversations, (item : MsgConversationBean)=>{
         ListItem() {
-          ChatListItemView({conv:item})
+          ChatListItemView({conv:item, allUnReadMsgnum:this.allUnReadMsgNum})
         }
-        .onClick(()=>{
-          let chatparam = new ChatParam(item.convId, item.convType, item.convNm)
-          router.pushUrl({
-            url: 'pages/Chat',
-            params: chatparam
-          })
-        })
       },(item: MsgConversationBean) => item.convType.toString()+'_'+item.convId.toString())
     }
     .divider({

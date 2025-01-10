@@ -123,6 +123,14 @@
     {
       "name": "hint_loging_otherterminals",
       "value": "Logged in on other terminals"
+    },
+    {
+      "name": "hint_exploit_ing",
+      "value": "Developing..."
+    },
+    {
+      "name": "hint_notPermission",
+      "value": "No permission"
     }
   ]
 }

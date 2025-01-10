@@ -32,16 +32,16 @@ struct AttachBtnView {
 }
 
 export interface ChatInputViewEvent {
-  onStartVoice() : void;
-  onStopVoice() : void;
-  onCancelVoice() : void;
-  onSendTxt(value: string) : void;
-  onPhoto() : void;
-  onVideo() : void;
-  onLocation() : void;
-  onPttCall() : void;
-  onVoiceCall() : void;
-  onVideoCall() : void;
+  onStartVoice:() => void;
+  onStopVoice:() => void;
+  onCancelVoice:() => void;
+  onSendTxt:(value: string) => void;
+  onPhoto:() => void;
+  onVideo:() => void;
+  onLocation:() => void;
+  onPttCall:() => void;
+  onVoiceCall:() => void;
+  onVideoCall:() => void;
 }
 
 @Component
@@ -118,6 +118,7 @@ export struct ChatInputView {
               })
               .onClick((event)=>{
                 this.inputViewEvent?.onSendTxt(this.txt);
+                this.txt = '';
               })
           } else {
             Image($r('app.media.ic_show_attach_day'))

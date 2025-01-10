@@ -1,6 +1,6 @@
 import { relationalStore } from '@kit.ArkData'; // 导入模块
 import { common } from '@kit.AbilityKit';
-import * as MsgConversationDB from './MsgConversationDB';
+import * as MsgDB from './MsgDB';
 
 const DB_VERSION:number = 1;
 
@@ -28,7 +28,7 @@ export function initDBManager(ctx: common.UIAbilityContext) {
 
     // 当数据库创建时，数据库默认版本为0
     if (store.version === 0) {
-      MsgConversationDB.createTable(store, false);
+      MsgDB.createTable(store, false);
       // 设置数据库的版本，入参为大于0的整数
       store.version = DB_VERSION;
     }

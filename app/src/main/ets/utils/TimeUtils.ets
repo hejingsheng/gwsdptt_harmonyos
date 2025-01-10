@@ -76,8 +76,8 @@ class TimeUtils {
    * 时间格式化，格式：YYYY-MM-DD HH:mm:ss
    * @param time
    */
-  formatDateTime(time: string | number | Date): string {
-    return  dayJs(time).format("YYYY-MM-DD HH:mm:ss")
+  formatDateTime(time: string | number | Date, format:string): string {
+    return  dayJs(time).format(format)
   }
 
   /**

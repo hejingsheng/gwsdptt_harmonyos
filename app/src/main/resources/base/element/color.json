@@ -25,6 +25,10 @@
       "value": "#777777"
     },
     {
+      "name": "text_timer_color",
+      "value": "#999999"
+    },
+    {
       "name": "top_view_color",
       "value": "#F5F5F5"
     },
@@ -50,11 +54,11 @@
     },
     {
       "name": "chat_txt_from_bg_color",
-      "value": "#f6f4f4"
+      "value": "#F4F4F2"
     },
     {
       "name": "chat_txt_to_bg_color",
-      "value": "#aafa19"
+      "value": "#BBEA4F"
     },
     {
       "name": "chat_txt_color",
