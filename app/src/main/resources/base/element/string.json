@@ -45,6 +45,14 @@
       "value": "Group Detail"
     },
     {
+      "name": "title_group_call",
+      "value": "Group call"
+    },
+    {
+      "name": "title_temp_call",
+      "value": "Temporary call"
+    },
+    {
       "name": "title_group_member",
       "value": "Group Member"
     },
@@ -179,6 +187,14 @@
     {
       "name": "chat_imtype_location",
       "value": "【Location】"
+    },
+    {
+      "name": "hint_poc_current_group",
+      "value": "Current group: %1$s"
+    },
+    {
+      "name": "hint_poc_current_member",
+      "value": "Current user: %1$s"
     }
   ]
 }

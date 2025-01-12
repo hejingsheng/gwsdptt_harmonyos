@@ -33,12 +33,24 @@
       "value": "85vp"
     },
     {
+      "name": "text_size_largeXXXX",
+      "value": "28vp"
+    },
+    {
       "name": "text_size_largeXXX",
       "value": "26vp"
     },
     {
       "name": "text_size_largeX",
       "value": "22vp"
+    },
+    {
+      "name": "text_size_large",
+      "value": "20vp"
+    },
+    {
+      "name": "text_size_normalX",
+      "value": "18vp"
     },
     {
       "name": "text_size_normal",

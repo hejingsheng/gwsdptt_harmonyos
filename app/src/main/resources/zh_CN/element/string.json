@@ -179,6 +179,22 @@
     {
       "name": "btn_loosen_end",
       "value": "松开结束"
+    },
+    {
+      "name": "hint_poc_current_group",
+      "value": "当前群组：%1$s"
+    },
+    {
+      "name": "hint_poc_current_member",
+      "value": "当前用户：%1$s"
+    },
+    {
+      "name": "title_group_call",
+      "value": "群组呼叫"
+    },
+    {
+      "name": "title_temp_call",
+      "value": "临时呼叫"
     }
   ]
 }

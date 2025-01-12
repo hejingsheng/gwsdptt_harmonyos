@@ -8,6 +8,7 @@
     "pages/Chat",
     "pages/PhotoShow",
     "pages/comm_page/PhotoPicker",
-    "pages/VideoShow"
+    "pages/VideoShow",
+    "pages/PttCall"
   ]
 }

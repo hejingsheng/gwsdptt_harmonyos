@@ -179,6 +179,22 @@
     {
       "name": "btn_loosen_end",
       "value": "Release to end"
+    },
+    {
+      "name": "hint_poc_current_group",
+      "value": "Current group: %1$s"
+    },
+    {
+      "name": "hint_poc_current_member",
+      "value": "Current user: %1$s"
+    },
+    {
+      "name": "title_group_call",
+      "value": "Group call"
+    },
+    {
+      "name": "title_temp_call",
+      "value": "Temporary call"
     }
   ]
 }

@@ -23,6 +23,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { JSON } from '@kit.ArkTS';
 import AppAbility from '../appability/AppAbility';
 import { ChatFileSendService } from '../service/ChatFileSendService';
+import { PttCallParam } from '../service/PttCallParam';
 
 const CHATTING_TIME_SPACE = 120;
 
@@ -324,7 +325,18 @@ struct Chat {
           });
         },
         onPttCall:() => {
-
+          let create = false;
+          if (this.charparam.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER) {
+            create = true;
+          }
+          else {
+            create = false;
+          }
+          let pttparam = new PttCallParam(this.charparam.convId, this.charparam.convNm, this.charparam.convType, create);
+          router.pushUrl({
+            url: 'pages/PttCall',
+            params: pttparam
+          })
         },
         onVoiceCall:() => {
 
