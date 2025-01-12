@@ -2,13 +2,38 @@ import { MsgConversationBean } from "../db/MsgConversationBean";
 import { ChatParam } from "../service/ChatModel";
 import TimeUtils from "../utils/TimeUtils"
 import { router } from "@kit.ArkUI";
+import { GWType } from "gwsdptt_sdk";
 
 @Component
 export struct ChatListItemView {
   @State isPress: boolean = false;
-  //@State conv: MsgConversationBean = new MsgConversationBean(0, '', 0, 0, '', 0, 0, 0, '', 0, '', 0);
   @ObjectLink conv: MsgConversationBean;
   @Link allUnReadMsgnum:number;
+
+  private getLastMsgContext() : ResourceStr {
+    if (this.conv.lastMsgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {
+      return this.conv.lastMsgContent;
+    }
+    else if(this.conv.lastMsgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO){
+      return $r('app.string.chat_imtype_img');
+    }
+    else if(this.conv.lastMsgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE){
+      return $r('app.string.chat_imtype_voice');
+    }
+    else if(this.conv.lastMsgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO){
+      return $r('app.string.chat_imtype_video');
+    }
+    else if(this.conv.lastMsgType === 0){
+      return $r('app.string.chat_type_voice');
+    }
+    else if(this.conv.lastMsgType === 1){
+      return $r('app.string.chat_type_video');
+    }
+    else {
+      return this.conv.lastMsgContent;
+    }
+  }
+
   build() {
     RelativeContainer() {
       Badge({
@@ -52,7 +77,7 @@ export struct ChatListItemView {
         .margin({
           left: '18vp'
         })
-      Text(this.conv.lastMsgContent)
+      Text(this.getLastMsgContext())
         .id('groupid')
         .height('auto')
         .fontWeight(FontWeight.Normal)

@@ -1,3 +1,5 @@
+import { GWMsgBean } from "gwsdptt_sdk";
+
 export class ChatParam {
   public convId:number = 0;
   public convType:number = 0;
@@ -17,6 +19,51 @@ export class ChatTime {
   constructor(time: number) {
     this.time = time;
   }
+}
+
+export class ChatFileSelectParam {
+  public filepath:string;
+  public filetype:number;
+
+  constructor(filepath: string, filetype: number) {
+    this.filepath = filepath;
+    this.filetype = filetype;
+  }
+}
+
+@Sendable
+export class ChatFileUploadParam {
+  public filepath:string;
+  public filetype:number;
+  public filepathThumb:string;
+
+  constructor(filepath: string, filetype: number, filepathThumb: string) {
+    this.filepath = filepath;
+    this.filetype = filetype;
+    this.filepathThumb = filepathThumb;
+  }
+
+
+}
+
+export class ChatFileMsgParam {
+
+  public static VIDEO_FILE_TYPE:number = 0;
+  public static PHOTO_FILE_TYPE:number = 1;
+  public static VOICE_FILE_TYPE:number = 2;
+
+  public filepath:string;
+  public filetype:number;
+  public filepathThumb:string;
+  public msg:GWMsgBean;
+
+  constructor(filepath: string, filetype: number, filepathThumb: string, msg: GWMsgBean) {
+    this.filepath = filepath;
+    this.filetype = filetype;
+    this.filepathThumb = filepathThumb;
+    this.msg = msg;
+  }
+
 }
 
 export class ChatMsg {

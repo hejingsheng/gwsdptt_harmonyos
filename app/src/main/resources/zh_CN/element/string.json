@@ -131,6 +131,54 @@
     {
       "name": "hint_notPermission",
       "value": "无权限"
+    },
+    {
+      "name": "confirm",
+      "value": "确定"
+    },
+    {
+      "name": "cancel",
+      "value": "取消"
+    },
+    {
+      "name": "hint_uploading",
+      "value": "正在上传"
+    },
+    {
+      "name": "chat_type_video",
+      "value": "【视频通话】"
+    },
+    {
+      "name": "chat_type_voice",
+      "value": "【语音通话】"
+    },
+    {
+      "name": "chat_imtype_video",
+      "value": "【视频】"
+    },
+    {
+      "name": "chat_imtype_img",
+      "value": "【图片】"
+    },
+    {
+      "name": "chat_imtype_voice",
+      "value": "【语音】"
+    },
+    {
+      "name": "chat_imtype_pttvoice",
+      "value": "【PTT语音】"
+    },
+    {
+      "name": "chat_imtype_file",
+      "value": "【文件】"
+    },
+    {
+      "name": "chat_imtype_location",
+      "value": "【位置】"
+    },
+    {
+      "name": "btn_loosen_end",
+      "value": "松开结束"
     }
   ]
 }

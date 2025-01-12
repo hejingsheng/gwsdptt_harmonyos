@@ -131,6 +131,54 @@
     {
       "name": "hint_notPermission",
       "value": "No permission"
+    },
+    {
+      "name": "confirm",
+      "value": "Confirm"
+    },
+    {
+      "name": "cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "hint_uploading",
+      "value": "Uploading..."
+    },
+    {
+      "name": "chat_type_video",
+      "value": "【Video chat】"
+    },
+    {
+      "name": "chat_type_voice",
+      "value": "【Video chat】"
+    },
+    {
+      "name": "chat_imtype_video",
+      "value": "【Video】"
+    },
+    {
+      "name": "chat_imtype_img",
+      "value": "【Image】"
+    },
+    {
+      "name": "chat_imtype_voice",
+      "value": "【Voice】"
+    },
+    {
+      "name": "chat_imtype_pttvoice",
+      "value": "【PTT voice】"
+    },
+    {
+      "name": "chat_imtype_file",
+      "value": "【File】"
+    },
+    {
+      "name": "chat_imtype_location",
+      "value": "【Location】"
+    },
+    {
+      "name": "btn_loosen_end",
+      "value": "Release to end"
     }
   ]
 }

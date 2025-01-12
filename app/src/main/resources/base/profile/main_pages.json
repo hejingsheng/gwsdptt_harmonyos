@@ -6,6 +6,8 @@
     "pages/GroupDetail",
     "pages/MemberList",
     "pages/Chat",
-    "pages/PhotoShow"
+    "pages/PhotoShow",
+    "pages/comm_page/PhotoPicker",
+    "pages/VideoShow"
   ]
 }

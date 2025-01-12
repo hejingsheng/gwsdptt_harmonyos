@@ -1,7 +1,6 @@
-import { Session } from '../service/SessionModel';
 import * as TopView from '../view/TopView'
 import { promptAction, router } from '@kit.ArkUI';
-import { ChatMsg, ChatParam, ChatTime } from '../service/ChatModel';
+import { ChatFileSelectParam, ChatFileMsgParam, ChatMsg, ChatParam, ChatTime } from '../service/ChatModel';
 import { ChatInputView } from '../view/ChatInputView';
 import { ChatTxtToItemView } from '../view/ChatTxtToItemView';
 import { ChatTxtFromItemView } from '../view/ChatTxtFromItemView';
@@ -11,15 +10,19 @@ import { ChatAVCallToItemView } from '../view/ChatAVCallToItem';
 import { ChatAVCallFromItemView } from '../view/ChatAVCallFromItem';
 import { ChatVoiceToItemView } from '../view/ChatVoiceToItem';
 import { ChatVoiceFromItemView } from '../view/ChatVoiceFromItem';
-import { ChatInputViewEvent } from '../view/ChatInputView'
-import * as MsgDB from "../db/MsgDB"
-import { getRDB } from "../db/DBManager"
+import { MsgDB } from '../db/MsgDB';
 import { GWSDKManager } from '../service/GWSDKManager';
 import { MsgContentBean } from '../db/MsgContentBean';
 import { GWMsgBean, GWType } from 'gwsdptt_sdk';
 import TimeUtils from "../utils/TimeUtils"
 import { common } from '@kit.AbilityKit';
 import { MsgConversationBean } from '../db/MsgConversationBean';
+import { photoAccessHelper } from '@kit.MediaLibraryKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { JSON } from '@kit.ArkTS';
+import AppAbility from '../appability/AppAbility';
+import { ChatFileSendService } from '../service/ChatFileSendService';
 
 const CHATTING_TIME_SPACE = 120;
 
@@ -32,6 +35,10 @@ struct Chat {
   private chatlistScroller: Scroller = new Scroller();
   private timer:number = 0;
   private ctx:common.UIAbilityContext|undefined;
+
+  private log(msg: string) {
+    hilog.info(0x0000, AppAbility.TAG, 'Chat=%{public}s', msg);
+  }
 
   private getUid() : string {
     return GWSDKManager.getInstance().getUserInfo().id.toString();
@@ -64,8 +71,9 @@ struct Chat {
     }
     this.ctx = getContext(this) as common.UIAbilityContext;
     this.ctx.eventHub.on('recvmsg', (msg: MsgContentBean) => {
+      MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.charparam.convId, this.charparam.convType);
       this.addMessage(msg);
-    })
+    });
   }
 
   private addMessage(msg:MsgContentBean) {
@@ -88,6 +96,10 @@ struct Chat {
         msg.senderType, msg.msgType, msg.content,
         msg.url, msg.thumburl, msg.playtime, msg.time));
     }
+    this.timer = setInterval(()=>{
+      this.chatlistScroller.scrollToIndex(this.chatMsgArr.length-1);
+      clearInterval(this.timer)
+    }, 300);
   }
 
   aboutToAppear(): void {
@@ -96,18 +108,75 @@ struct Chat {
       this.charparam = param;
       this.viewItem = new TopView.ViewItem(this.charparam.convNm)
     }
-    MsgDB.queryChatRecord(getRDB(), this.getUid(), this.charparam.convId, this.charparam.convType, 0, 30)
+    MsgDB.getINSTANCE().queryChatRecord(this.getUid(), this.charparam.convId, this.charparam.convType, 0, 30)
       .then((list:MsgContentBean[]) => {
         this.addMessageList(list);
+        this.timer = setInterval(()=>{
+          this.chatlistScroller.scrollToIndex(this.chatMsgArr.length-1, true, ScrollAlign.START);
+          clearInterval(this.timer)
+        }, 300);
       });
-    MsgDB.updateConvRead(getRDB(), this.getUid(), this.charparam.convId, this.charparam.convType);
+    MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.charparam.convId, this.charparam.convType);
   }
 
-  onPageShow(): void {
-    this.timer = setInterval(()=>{
-      //this.chatlistScroller.scrollToIndex(6, true);
-      clearInterval(this.timer)
-    }, 300);
+  private async openPhotoPicker() : Promise<ChatFileSelectParam> {
+    let selectFile:ChatFileSelectParam = new ChatFileSelectParam('', -1);
+    try {
+      let PhotoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
+      PhotoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+      PhotoSelectOptions.maxSelectNumber = 1;
+      let photoPicker = new photoAccessHelper.PhotoViewPicker();
+      await photoPicker.select(PhotoSelectOptions).then((PhotoSelectResult: photoAccessHelper.PhotoSelectResult) => {
+        this.log('PhotoViewPicker.select successfully, PhotoSelectResult uri:' + JSON.stringify(PhotoSelectResult));
+        selectFile.filepath = PhotoSelectResult.photoUris[0];
+        selectFile.filetype = ChatFileMsgParam.PHOTO_FILE_TYPE;
+        return selectFile;
+      }).catch((err: BusinessError) => {
+        this.log('PhotoViewPicker.select failed with err:'+err.code+':'+err.message);
+      });
+    } catch (error) {
+      let err: BusinessError = error as BusinessError;
+      this.log('PhotoViewPicker failed with err:'+err.code+':'+err.message);
+    }
+    return selectFile;
+  }
+
+  private handleFileSend(selectFile:ChatFileSelectParam) {
+    let filepath = selectFile.filepath;
+    let filetype = selectFile.filetype;
+    let filethumb = '';
+    if (filepath === '' || filepath === undefined || filetype === -1) {
+      return;
+    }
+    let msgtype = GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO;
+    if (selectFile.filetype === ChatFileMsgParam.VIDEO_FILE_TYPE) {
+      // video file
+      filethumb = '';
+      msgtype = GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO;
+    }
+    else if (selectFile.filetype === ChatFileMsgParam.VOICE_FILE_TYPE) {
+      msgtype = GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE;
+    }
+    let gwMsgBean:GWMsgBean = GWSDKManager.getInstance().createMsgBean(this.charparam.convType, this.charparam.convId, this.charparam.convNm, msgtype);
+    let chatFileMsgParam:ChatFileMsgParam = new ChatFileMsgParam('', 0, '', gwMsgBean);
+    this.log('file send task:'+filepath);
+    chatFileMsgParam.msg = gwMsgBean;
+    chatFileMsgParam.filepath = filepath;
+    chatFileMsgParam.filetype = filetype;
+    chatFileMsgParam.filepathThumb = filethumb;
+    promptAction.showToast({
+      message:$r('app.string.hint_uploading'),
+      duration:3000
+    });
+    if (!GWSDKManager.getInstance().hasMsgPermission()) {
+      promptAction.showToast({
+        message:$r('app.string.hint_notPermission'),
+        duration:2000
+      });
+      return;
+    }
+    this.log('start file send task');
+    ChatFileSendService.getINSTACCE().sendMediaFile(chatFileMsgParam, this.ctx!);
   }
 
   build() {
@@ -195,6 +264,7 @@ struct Chat {
           align: VerticalAlign.Top
         }
       })
+      .edgeEffect(EdgeEffect.Fade)
       ChatInputView({inputViewEvent: {
         onStartVoice:() => {
 
@@ -213,13 +283,16 @@ struct Chat {
             });
             return;
           }
+          if (value === '') {
+            return;
+          }
           let gwMsgBean:GWMsgBean = GWSDKManager.getInstance().createMsgBean(this.charparam.convType, this.charparam.convId,
             this.charparam.convNm, GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT);
           gwMsgBean.data.content = value;
           GWSDKManager.getInstance().sendMsg(gwMsgBean);
-          MsgDB.saveMsgContent(getRDB(), this.getUid(), gwMsgBean)
+          MsgDB.getINSTANCE().saveMsgContent(this.getUid(), gwMsgBean)
             .then((msg:MsgContentBean) => {
-              MsgDB.saveOrUpdateConv(getRDB(), msg, false)
+              MsgDB.getINSTANCE().saveOrUpdateConv(msg, false)
                 .then((conv:MsgConversationBean) => {
                   this.addMessage(msg);
                   this.ctx?.eventHub.emit('recvconv', conv);
@@ -227,13 +300,28 @@ struct Chat {
             });
         },
         onPhoto:() => {
-
+          if (!GWSDKManager.getInstance().hasMsgPermission()) {
+            promptAction.showToast({
+              message:$r('app.string.hint_notPermission'),
+              duration:2000
+            });
+            return;
+          }
+          this.openPhotoPicker().then((selectfile:ChatFileSelectParam) => {
+            this.handleFileSend(selectfile);
+          })
         },
         onVideo:() => {
-
+          promptAction.showToast({
+            message:$r('app.string.hint_exploit_ing'),
+            duration:2000
+          });
         },
         onLocation:() => {
-
+          promptAction.showToast({
+            message:$r('app.string.hint_exploit_ing'),
+            duration:2000
+          });
         },
         onPttCall:() => {
 
@@ -243,7 +331,7 @@ struct Chat {
         },
         onVideoCall:() => {
           promptAction.showToast({
-            message:$r('app.string.hint_login_failure'),
+            message:$r('app.string.hint_exploit_ing'),
             duration:2000
           });
         }

@@ -1,10 +1,10 @@
 import { ChatListItemView } from "../view/ChatListItemView";
-import * as MsgDB from "../db/MsgDB"
-import { getRDB } from "../db/DBManager"
+import { MsgDB } from '../db/MsgDB';
 import { GWSDKManager } from "../service/GWSDKManager";
 import { MsgConversationBean } from "../db/MsgConversationBean";
 import { hilog } from "@kit.PerformanceAnalysisKit";
 import { common } from "@kit.AbilityKit";
+
 
 @Component
 export struct ChatListView {
@@ -27,7 +27,7 @@ export struct ChatListView {
 
   aboutToAppear(): void {
     hilog.info(0x0000, 'GWAPP', 'aboutToAppear');
-    MsgDB.queryConvList(getRDB(), this.getUid())
+    MsgDB.getINSTANCE().queryConvList(this.getUid())
       .then((list:MsgConversationBean[]) => {
         this.conversations = list;
         this.conversations.sort((a:MsgConversationBean, b:MsgConversationBean) => {

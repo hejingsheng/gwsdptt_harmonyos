@@ -42,6 +42,13 @@ export struct ChatVideoPhotoToItemView {
           .onClick(()=>{
             if (this.video) {
               // goto video play page
+              router.pushUrl({
+                url: 'pages/VideoShow',
+                params: {
+                  url:this.url,
+                  thumburl:this.thumburl
+                }
+              });
             } else {
               router.pushUrl({
                 url: 'pages/PhotoShow',

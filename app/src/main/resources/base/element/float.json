@@ -95,6 +95,10 @@
     {
       "name": "chat_avcall_icon_size",
       "value": "40vp"
+    },
+    {
+      "name": "photo_view_size",
+      "value": "50vp"
     }
   ]
 }

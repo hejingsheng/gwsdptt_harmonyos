@@ -51,7 +51,8 @@ export struct ChatInputView {
   @State showAttach:boolean = false;
 
   private inputViewEvent?:ChatInputViewEvent;
-  private txt:string = '';
+  @State txt:string = '';
+  @State press:boolean = false;
 
   build() {
     Column() {
@@ -70,7 +71,7 @@ export struct ChatInputView {
           })
         RelativeContainer(){
           if (this.voiceSend) {
-            Button($r('app.string.btn_press_speak'))
+            Button(this.press?$r('app.string.btn_loosen_end'):$r('app.string.btn_press_speak'))
               .height('100%')
               .width('100%')
               .alignRules({
@@ -78,26 +79,35 @@ export struct ChatInputView {
               })
               .onTouch((event)=>{
                 if (event.type === TouchType.Down) {
+                  this.press = true;
                   this.inputViewEvent?.onStartVoice();
                 } else if (event.type === TouchType.Up) {
+                  this.press = false;
                   this.inputViewEvent?.onStopVoice();
                 } else if (event.type === TouchType.Cancel) {
+                  this.press = false;
                   this.inputViewEvent?.onCancelVoice();
                 }
               })
           } else {
-            TextInput()
+            TextInput({text:this.txt})
               .height('100%')
               .width('100%')
               .alignRules({
                 center: { anchor: '__container__', align: VerticalAlign.Center },
               })
               .onFocus(()=>{
-                this.textInputForce = true;
-                this.showAttach = false;
+                //this.textInputForce = true;
               })
               .onChange((value)=>{
                 this.txt = value
+                if (this.txt.length > 0) {
+                  this.textInputForce = true;
+                  this.showAttach = false;
+                }
+                else {
+                  this.textInputForce = false;
+                }
               })
           }
         }

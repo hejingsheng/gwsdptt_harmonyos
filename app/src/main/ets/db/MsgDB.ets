@@ -4,8 +4,10 @@ import { MsgContentBean } from './MsgContentBean';
 import { MsgConversationBean } from './MsgConversationBean';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { common } from '@kit.AbilityKit';
+import { STORE_CONFIG } from './DBManager';
 
-export function createTable(store: relationalStore.RdbStore, ifNotExists:boolean) {
+function createTable(store: relationalStore.RdbStore, ifNotExists:boolean) {
   let constraint:string = ifNotExists? "IF NOT EXISTS ": "";
   let sql_create_convtable = "CREATE TABLE " + constraint + "\"tb_msg_conversation\" (" + //
     "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: tab_Id
@@ -41,14 +43,14 @@ export function createTable(store: relationalStore.RdbStore, ifNotExists:boolean
   store.executeSql(sql_create_msgtable);
 }
 
-export function dropTable(store: relationalStore.RdbStore, ifExists:boolean) {
+function dropTable(store: relationalStore.RdbStore, ifExists:boolean) {
   let sql_drop_convtable = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"tb_msg_conversation\"";
   store.executeSql(sql_drop_convtable);
   let sql_drop_msgtable = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"tb_msg_content\"";
   store.executeSql(sql_drop_msgtable);
 }
 
-export async function queryConvList(store: relationalStore.RdbStore, uid:string): Promise<MsgConversationBean[]> {
+async function queryConvList(store: relationalStore.RdbStore, uid:string): Promise<MsgConversationBean[]> {
   let convlist:Array<MsgConversationBean> = [];
   let predicates = new relationalStore.RdbPredicates('tb_msg_conversation');
   predicates.equalTo('LOGIN_UID', uid);
@@ -80,7 +82,7 @@ export async function queryConvList(store: relationalStore.RdbStore, uid:string)
   return convlist;
 }
 
-export async function saveMsgContent(store: relationalStore.RdbStore, uid: string, msg: GWMsgBean) : Promise<MsgContentBean> {
+async function saveMsgContent(store: relationalStore.RdbStore, uid: string, msg: GWMsgBean) : Promise<MsgContentBean> {
   let msgBean: MsgContentBean = new MsgContentBean(-1, '', 0, 0, '', '', 0, '', '', 0, 0, '', '', '', 0, 0);
   msgBean.loginUid = uid;
   msgBean.senderId = msg.data.sendId;
@@ -114,7 +116,7 @@ export async function saveMsgContent(store: relationalStore.RdbStore, uid: strin
   }
   msgBean.time = msg.time;
   if (msg.data.receiveUType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER
-      || msg.data.receiveUType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_DISPATCH) {
+    || msg.data.receiveUType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_DISPATCH) {
     if (uid === msg.data.sendId) {
       msgBean.convId = parseInt(msg.data.receiveId);
     }
@@ -187,112 +189,7 @@ function queryConversation(store: relationalStore.RdbStore, uid:string, convId:n
   return conversation;
 }
 
-export async function saveOrUpdateConv(store: relationalStore.RdbStore, msg:MsgContentBean, clearunread: boolean) : Promise<MsgConversationBean> {
-  let conversation:MsgConversationBean|null = null;
-  let convNm = '';
-  if (msg.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER
-    ||msg.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_DISPATCH) {
-    if (msg.loginUid === msg.senderId) {
-      convNm = msg.recvNm;
-    }
-    else {
-      convNm = msg.senderNm;
-    }
-  }
-  else {
-    convNm = msg.recvNm;
-  }
-  conversation = queryConversation(store, msg.loginUid, msg.convId, msg.convType);
-  if (conversation === null) {
-    conversation = new MsgConversationBean(-1, msg.loginUid, msg.convId, msg.convType, convNm, 1, 0,
-      0, '', 0, '', 0);
-    conversation.msgUnReadCnt = 0;
-  }
-  conversation.loginUid = msg.loginUid;
-  conversation.convId = msg.convId;
-  conversation.convType = msg.convType;
-  conversation.convNm = convNm;
-  conversation.lastMsgId = msg.id;
-  conversation.lastMsgSenderNm = msg.senderNm;
-  conversation.lastMsgType = msg.msgType;
-  conversation.lastMsgTime = msg.time;
-  conversation.lastMsgContent = msg.content;
-  if (msg.loginUid === msg.senderId) {
-    conversation.msgUnReadCnt = 0;
-  }
-  else {
-    if (!clearunread) {
-      let unread = conversation.msgUnReadCnt;
-      conversation.msgUnReadCnt = unread+1;
-    }
-  }
-  if (conversation.id === -1) {
-    const convData: relationalStore.ValuesBucket = {
-      'LOGIN_UID': conversation.loginUid,
-      'CONV_ID': conversation.convId,
-      'CONV_TYPE': conversation.convType,
-      'CONV_NM': conversation.convNm,
-      'MSG_CNT': conversation.msgCnt,
-      'MSG_UN_READ_CNT': conversation.msgUnReadCnt,
-      'LAST_MSG_ID': conversation.lastMsgId,
-      'LAST_MSG_SENDER_NM': conversation.lastMsgSenderNm,
-      'LAST_MSG_TYPE': conversation.lastMsgType,
-      'LAST_MSG_CONTENT': conversation.lastMsgContent,
-      'LAST_MSG_TIME': conversation.lastMsgTime
-    };
-    await store.insert('tb_msg_conversation', convData,
-      relationalStore.ConflictResolution.ON_CONFLICT_REPLACE).then((rowId: number) => {
-      hilog.error(0x0000, 'DB', `insert failed, code is ${rowId}`);
-    }).catch((err: BusinessError) => {
-      hilog.error(0x0000, 'DB', `insert failed, code is ${err.code},message is ${err.message}`);
-    });
-  }
-  else {
-    let predicates = new relationalStore.RdbPredicates('tb_msg_conversation');
-    predicates.equalTo('_id', conversation.id);
-    const convData: relationalStore.ValuesBucket = {
-      'LOGIN_UID': conversation.loginUid,
-      'CONV_ID': conversation.convId,
-      'CONV_TYPE': conversation.convType,
-      'CONV_NM': conversation.convNm,
-      'MSG_CNT': conversation.msgCnt,
-      'MSG_UN_READ_CNT': conversation.msgUnReadCnt,
-      'LAST_MSG_ID': conversation.lastMsgId,
-      'LAST_MSG_SENDER_NM': conversation.lastMsgSenderNm,
-      'LAST_MSG_TYPE': conversation.lastMsgType,
-      'LAST_MSG_CONTENT': conversation.lastMsgContent,
-      'LAST_MSG_TIME': conversation.lastMsgTime
-    };
-    await store.update(convData, predicates).then((rowId: number) => {
-      hilog.error(0x0000, 'DB', `insert failed, code is ${rowId}`);
-    }).catch((err: BusinessError) => {
-      hilog.error(0x0000, 'DB', `insert failed, code is ${err.code},message is ${err.message}`);
-    })
-  }
-  return conversation;
-}
-
-export function updateConvRead(store: relationalStore.RdbStore, uid: string, convId:number, convType:number) {
-  let conversation:MsgConversationBean|null = null;
-  conversation = queryConversation(store, uid, convId, convType);
-  if (conversation != null) {
-    conversation.msgUnReadCnt = 0;
-    let predicates = new relationalStore.RdbPredicates('tb_msg_conversation');
-    predicates.equalTo('_id', conversation.id)
-    const convData: relationalStore.ValuesBucket = {
-      'MSG_UN_READ_CNT': conversation.msgUnReadCnt,
-    };
-    store.update(convData, predicates)
-      .then((rowId: number) => {
-
-      })
-      .catch((err: BusinessError) => {
-
-      })
-  }
-}
-
-export async function queryChatRecord(store: relationalStore.RdbStore, uid: string, convId:number, convType:number,
+async function queryChatRecord(store: relationalStore.RdbStore, uid: string, convId:number, convType:number,
   pageNum: number, pageSize: number) : Promise<MsgContentBean[]> {
   let msgList: Array<MsgContentBean> = [];
   let predicates = new relationalStore.RdbPredicates('tb_msg_content');
@@ -336,7 +233,7 @@ export async function queryChatRecord(store: relationalStore.RdbStore, uid: stri
   return msgList;
 }
 
-export function deleteConv(store: relationalStore.RdbStore, uid: string, convId:number, convType:number) {
+function deleteConv(store: relationalStore.RdbStore, uid: string, convId:number, convType:number) {
   let predicates = new relationalStore.RdbPredicates('tb_msg_conversation');
   predicates.equalTo('LOGIN_UID', uid)
     .and()
@@ -366,3 +263,350 @@ export function deleteConv(store: relationalStore.RdbStore, uid: string, convId:
     });
 }
 
+'user shared'
+export class MsgDB {
+
+  public store:relationalStore.RdbStore|undefined;
+
+  private static INSTANCE:MsgDB = new MsgDB();
+
+  public static getINSTANCE():MsgDB {
+    return MsgDB.INSTANCE;
+  }
+
+  private constructor() {
+  }
+
+  public init(store: relationalStore.RdbStore) {
+    this.store = store;
+  }
+
+  public dropTable(ifExists:boolean) {
+    dropTable(this.store!, ifExists);
+  }
+
+  public createTable(ifNotExists:boolean) {
+    createTable(this.store!, ifNotExists);
+  }
+
+  public async queryConvList(uid:string): Promise<MsgConversationBean[]> {
+    return queryConvList(this.store!, uid);
+  }
+
+  public async saveMsgContent(uid: string, msg: GWMsgBean) : Promise<MsgContentBean> {
+    return saveMsgContent(this.store!, uid, msg);
+  }
+
+  public async saveOrUpdateConv(msg: MsgContentBean, clearunread: boolean) : Promise<MsgConversationBean> {
+    let conversation:MsgConversationBean|null = null;
+    let convNm = '';
+    if (msg.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER
+      ||msg.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_DISPATCH) {
+      if (msg.loginUid === msg.senderId) {
+        convNm = msg.recvNm;
+      }
+      else {
+        convNm = msg.senderNm;
+      }
+    }
+    else {
+      convNm = msg.recvNm;
+    }
+    conversation = queryConversation(this.store!, msg.loginUid, msg.convId, msg.convType);
+    if (conversation === null) {
+      conversation = new MsgConversationBean(-1, msg.loginUid, msg.convId, msg.convType, convNm, 1, 0,
+        0, '', 0, '', 0);
+      conversation.msgUnReadCnt = 0;
+    }
+    conversation.loginUid = msg.loginUid;
+    conversation.convId = msg.convId;
+    conversation.convType = msg.convType;
+    conversation.convNm = convNm;
+    conversation.lastMsgId = msg.id;
+    conversation.lastMsgSenderNm = msg.senderNm;
+    conversation.lastMsgType = msg.msgType;
+    conversation.lastMsgTime = msg.time;
+    conversation.lastMsgContent = msg.content;
+    if (msg.loginUid === msg.senderId) {
+      conversation.msgUnReadCnt = 0;
+    }
+    else {
+      if (!clearunread) {
+        let unread = conversation.msgUnReadCnt;
+        conversation.msgUnReadCnt = unread+1;
+      }
+    }
+    if (conversation.id === -1) {
+      const convData: relationalStore.ValuesBucket = {
+        'LOGIN_UID': conversation.loginUid,
+        'CONV_ID': conversation.convId,
+        'CONV_TYPE': conversation.convType,
+        'CONV_NM': conversation.convNm,
+        'MSG_CNT': conversation.msgCnt,
+        'MSG_UN_READ_CNT': conversation.msgUnReadCnt,
+        'LAST_MSG_ID': conversation.lastMsgId,
+        'LAST_MSG_SENDER_NM': conversation.lastMsgSenderNm,
+        'LAST_MSG_TYPE': conversation.lastMsgType,
+        'LAST_MSG_CONTENT': conversation.lastMsgContent,
+        'LAST_MSG_TIME': conversation.lastMsgTime
+      };
+      await this.store!.insert('tb_msg_conversation', convData,
+        relationalStore.ConflictResolution.ON_CONFLICT_REPLACE).then((rowId: number) => {
+        hilog.error(0x0000, 'DB', `insert failed, code is ${rowId}`);
+      }).catch((err: BusinessError) => {
+        hilog.error(0x0000, 'DB', `insert failed, code is ${err.code},message is ${err.message}`);
+      });
+    }
+    else {
+      let predicates = new relationalStore.RdbPredicates('tb_msg_conversation');
+      predicates.equalTo('_id', conversation.id);
+      const convData: relationalStore.ValuesBucket = {
+        'LOGIN_UID': conversation.loginUid,
+        'CONV_ID': conversation.convId,
+        'CONV_TYPE': conversation.convType,
+        'CONV_NM': conversation.convNm,
+        'MSG_CNT': conversation.msgCnt,
+        'MSG_UN_READ_CNT': conversation.msgUnReadCnt,
+        'LAST_MSG_ID': conversation.lastMsgId,
+        'LAST_MSG_SENDER_NM': conversation.lastMsgSenderNm,
+        'LAST_MSG_TYPE': conversation.lastMsgType,
+        'LAST_MSG_CONTENT': conversation.lastMsgContent,
+        'LAST_MSG_TIME': conversation.lastMsgTime
+      };
+      await this.store!.update(convData, predicates).then((rowId: number) => {
+        hilog.error(0x0000, 'DB', `insert failed, code is ${rowId}`);
+      }).catch((err: BusinessError) => {
+        hilog.error(0x0000, 'DB', `insert failed, code is ${err.code},message is ${err.message}`);
+      })
+    }
+    return conversation;
+  }
+
+  public async updateConvRead(uid: string, convId:number, convType:number) {
+    let conversation:MsgConversationBean|null = null;
+    conversation = queryConversation(this.store!, uid, convId, convType);
+    if (conversation != null) {
+      conversation.msgUnReadCnt = 0;
+      let predicates = new relationalStore.RdbPredicates('tb_msg_conversation');
+      predicates.equalTo('_id', conversation.id)
+      const convData: relationalStore.ValuesBucket = {
+        'MSG_UN_READ_CNT': conversation.msgUnReadCnt,
+      };
+      await this.store!.update(convData, predicates)
+        .then((rowId: number) => {
+
+        })
+        .catch((err: BusinessError) => {
+
+        })
+    }
+  }
+
+  public async queryChatRecord(uid: string, convId:number, convType:number,
+    pageNum: number, pageSize: number) : Promise<MsgContentBean[]> {
+    return queryChatRecord(this.store!, uid, convId, convType, pageNum, pageSize);
+  }
+
+  public deleteConv(uid: string, convId:number, convType:number) {
+    deleteConv(this.store!, uid, convId, convType);
+  }
+}
+
+
+
+
+
+
+
+
+@Concurrent
+export async function saveMsgContentTask(ctx: common.UIAbilityContext, uid: string, msg: GWMsgBean) : Promise<MsgContentBean> {
+  let msgBean: MsgContentBean = new MsgContentBean(-1, '', 0, 0, '', '', 0, '', '', 0, 0, '', '', '', 0, 0);
+  msgBean.loginUid = uid;
+  msgBean.senderId = msg.data.sendId;
+  msgBean.senderNm = msg.data.sendName;
+  msgBean.senderType = msg.data.sendUType;
+  msgBean.recvId = msg.data.receiveId;
+  msgBean.recvNm = msg.data.receiveName;
+  msgBean.msgType = msg.data.msgType;
+  let msgtype = msg.data.msgType;
+  if (msgtype === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {
+    msgBean.content = msg.data.content;
+    msgBean.url = '';
+    msgBean.thumburl = '';
+  }
+  else if (msgtype === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO
+    || msgtype === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE
+    || msgtype === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO) {
+    msgBean.content = '';
+    msgBean.url = msg.data.url;
+    if (msgtype === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO) {
+      msgBean.thumburl = msg.data.thumbUrl;
+    }
+    else {
+      msgBean.thumburl = '';
+    }
+  }
+  else {
+    msgBean.content = msg.data.content;
+    msgBean.url = '';
+    msgBean.thumburl = '';
+  }
+  msgBean.time = msg.time;
+  if (msg.data.receiveUType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER
+    || msg.data.receiveUType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_DISPATCH) {
+    if (uid === msg.data.sendId) {
+      msgBean.convId = parseInt(msg.data.receiveId);
+    }
+    else {
+      msgBean.convId = parseInt(msg.data.sendId);
+    }
+  }
+  else {
+    msgBean.convId = parseInt(msg.data.receiveId);
+  }
+  msgBean.convType = msg.data.receiveUType;
+  msgBean.playtime = 0;
+  const msgData: relationalStore.ValuesBucket = {
+    'LOGIN_UID': msgBean.loginUid,
+    'CONV_ID': msgBean.convId,
+    'CONV_TYPE': msgBean.convType,
+    'SENDER_ID': msgBean.senderId,
+    'SENDER_NM': msgBean.senderNm,
+    'SENDER_TYPE': msgBean.senderType,
+    'RECV_ID': msgBean.recvId,
+    'RECV_NM': msgBean.recvNm,
+    'RECV_TYPE': msgBean.recvType,
+    'MSG_TYPE': msgBean.msgType,
+    'CONTENT': msgBean.content,
+    'URL': msgBean.url,
+    'THUMBURL': msgBean.thumburl,
+    'PLAYTIME': msgBean.playtime,
+    'TIME': msgBean.time
+  };
+  // 默认数据库文件路径为 context.databaseDir + rdb + StoreConfig.name
+  let store: relationalStore.RdbStore = await relationalStore.getRdbStore(ctx, STORE_CONFIG);
+  await store.insert('tb_msg_content', msgData)
+    .then((value:number) => {
+      msgBean.id = value;
+    })
+    .catch((err: BusinessError) => {
+      hilog.error(0x0000, 'DB', `insert failed, code is ${err.code},message is ${err.message}`);
+    })
+  return msgBean;
+}
+
+// @Concurrent
+// export async function saveOrUpdateConvTask(ctx: common.UIAbilityContext, msg:MsgContentBean, clearunread: boolean) : Promise<MsgConversationBean> {
+//   let conversation:MsgConversationBean|null = null;
+//   let convNm = '';
+//   if (msg.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER
+//     ||msg.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_DISPATCH) {
+//     if (msg.loginUid === msg.senderId) {
+//       convNm = msg.recvNm;
+//     }
+//     else {
+//       convNm = msg.senderNm;
+//     }
+//   }
+//   else {
+//     convNm = msg.recvNm;
+//   }
+//   // 默认数据库文件路径为 context.databaseDir + rdb + StoreConfig.name
+//   let store: relationalStore.RdbStore = await relationalStore.getRdbStore(ctx, STORE_CONFIG);
+//   let predicates = new relationalStore.RdbPredicates('tb_msg_conversation');
+//   predicates.equalTo('LOGIN_UID', msg.loginUid)
+//     .and()
+//     .equalTo('CONV_ID', msg.convId)
+//     .and()
+//     .equalTo('CONV_TYPE', msg.convType);
+//   let resultSet = store.querySync(predicates, ['_id', 'LOGIN_UID', 'CONV_ID', 'CONV_TYPE', 'CONV_NM',
+//     'MSG_CNT', 'MSG_UN_READ_CNT',
+//     'LAST_MSG_ID', 'LAST_MSG_SENDER_NM', 'LAST_MSG_TYPE', 'LAST_MSG_CONTENT', 'LAST_MSG_TIME']);
+//   if (resultSet.rowCount !== 0) {
+//     // this conv is exist
+//     resultSet.goToNextRow();
+//     const id = resultSet.getValue(resultSet.getColumnIndex('_id')) as number;
+//     const uid = resultSet.getValue(resultSet.getColumnIndex('LOGIN_UID')) as string;
+//     const convid = resultSet.getValue(resultSet.getColumnIndex('CONV_ID')) as number;
+//     const convtype = resultSet.getValue(resultSet.getColumnIndex('CONV_TYPE')) as number;
+//     const convnm = resultSet.getValue(resultSet.getColumnIndex('CONV_NM')) as string;
+//     const msgcnt = resultSet.getValue(resultSet.getColumnIndex('MSG_CNT')) as number;
+//     const msgunreadcnt = resultSet.getValue(resultSet.getColumnIndex('MSG_UN_READ_CNT')) as number;
+//     const lastmsgid = resultSet.getValue(resultSet.getColumnIndex('LAST_MSG_ID')) as number;
+//     const lastmsgsendnm = resultSet.getValue(resultSet.getColumnIndex('LAST_MSG_SENDER_NM')) as string;
+//     const lastmsgtype = resultSet.getValue(resultSet.getColumnIndex('LAST_MSG_TYPE')) as number;
+//     const lastmsgcont = resultSet.getValue(resultSet.getColumnIndex('LAST_MSG_CONTENT')) as string;
+//     const lastmsgtime = resultSet.getValue(resultSet.getColumnIndex('LAST_MSG_TIME')) as number;
+//     conversation = new MsgConversationBean(id, uid, convid, convtype, convnm, msgcnt, msgunreadcnt,
+//       lastmsgid, lastmsgsendnm, lastmsgtype, lastmsgcont, lastmsgtime);
+//   }
+//   resultSet.close();
+//   if (conversation === null) {
+//     conversation = new MsgConversationBean(-1, msg.loginUid, msg.convId, msg.convType, convNm, 1, 0,
+//       0, '', 0, '', 0);
+//     conversation.msgUnReadCnt = 0;
+//   }
+//   conversation.loginUid = msg.loginUid;
+//   conversation.convId = msg.convId;
+//   conversation.convType = msg.convType;
+//   conversation.convNm = convNm;
+//   conversation.lastMsgId = msg.id;
+//   conversation.lastMsgSenderNm = msg.senderNm;
+//   conversation.lastMsgType = msg.msgType;
+//   conversation.lastMsgTime = msg.time;
+//   conversation.lastMsgContent = msg.content;
+//   if (msg.loginUid === msg.senderId) {
+//     conversation.msgUnReadCnt = 0;
+//   }
+//   else {
+//     if (!clearunread) {
+//       let unread = conversation.msgUnReadCnt;
+//       conversation.msgUnReadCnt = unread+1;
+//     }
+//   }
+//   if (conversation.id === -1) {
+//     const convData: relationalStore.ValuesBucket = {
+//       'LOGIN_UID': conversation.loginUid,
+//       'CONV_ID': conversation.convId,
+//       'CONV_TYPE': conversation.convType,
+//       'CONV_NM': conversation.convNm,
+//       'MSG_CNT': conversation.msgCnt,
+//       'MSG_UN_READ_CNT': conversation.msgUnReadCnt,
+//       'LAST_MSG_ID': conversation.lastMsgId,
+//       'LAST_MSG_SENDER_NM': conversation.lastMsgSenderNm,
+//       'LAST_MSG_TYPE': conversation.lastMsgType,
+//       'LAST_MSG_CONTENT': conversation.lastMsgContent,
+//       'LAST_MSG_TIME': conversation.lastMsgTime
+//     };
+//     await store.insert('tb_msg_conversation', convData,
+//       relationalStore.ConflictResolution.ON_CONFLICT_REPLACE).then((rowId: number) => {
+//       hilog.error(0x0000, 'DB', `insert failed, code is ${rowId}`);
+//     }).catch((err: BusinessError) => {
+//       hilog.error(0x0000, 'DB', `insert failed, code is ${err.code},message is ${err.message}`);
+//     });
+//   }
+//   else {
+//     let predicates = new relationalStore.RdbPredicates('tb_msg_conversation');
+//     predicates.equalTo('_id', conversation.id);
+//     const convData: relationalStore.ValuesBucket = {
+//       'LOGIN_UID': conversation.loginUid,
+//       'CONV_ID': conversation.convId,
+//       'CONV_TYPE': conversation.convType,
+//       'CONV_NM': conversation.convNm,
+//       'MSG_CNT': conversation.msgCnt,
+//       'MSG_UN_READ_CNT': conversation.msgUnReadCnt,
+//       'LAST_MSG_ID': conversation.lastMsgId,
+//       'LAST_MSG_SENDER_NM': conversation.lastMsgSenderNm,
+//       'LAST_MSG_TYPE': conversation.lastMsgType,
+//       'LAST_MSG_CONTENT': conversation.lastMsgContent,
+//       'LAST_MSG_TIME': conversation.lastMsgTime
+//     };
+//     await store.update(convData, predicates).then((rowId: number) => {
+//       hilog.error(0x0000, 'DB', `insert failed, code is ${rowId}`);
+//     }).catch((err: BusinessError) => {
+//       hilog.error(0x0000, 'DB', `insert failed, code is ${err.code},message is ${err.message}`);
+//     })
+//   }
+//   return conversation;
+// }

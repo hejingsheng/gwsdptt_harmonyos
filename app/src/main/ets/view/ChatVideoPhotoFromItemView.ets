@@ -45,6 +45,13 @@ export struct ChatVideoPhotoFromItemView {
           .onClick(()=>{
             if (this.video) {
               // goto video play page
+              router.pushUrl({
+                url: 'pages/VideoShow',
+                params: {
+                  url:this.url,
+                  thumburl:this.thumburl
+                }
+              });
             } else {
               router.pushUrl({
                 url: 'pages/PhotoShow',
@@ -61,6 +68,15 @@ export struct ChatVideoPhotoFromItemView {
             .margin({
               left: '75vp',
               top: -this.imageHeight/2
+            })
+            .onClick(()=>{
+              router.pushUrl({
+                url: 'pages/VideoShow',
+                params: {
+                  url:this.url,
+                  thumburl:this.thumburl
+                }
+              });
             })
         }
       }

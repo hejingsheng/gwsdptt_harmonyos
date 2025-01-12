@@ -1,10 +1,10 @@
 import { relationalStore } from '@kit.ArkData'; // 导入模块
 import { common } from '@kit.AbilityKit';
-import * as MsgDB from './MsgDB';
+import { MsgDB } from './MsgDB';
 
 const DB_VERSION:number = 1;
 
-const STORE_CONFIG :relationalStore.StoreConfig= {
+export const STORE_CONFIG :relationalStore.StoreConfig= {
   name: 'gwsd_ptt.db', // 数据库文件名
   securityLevel: relationalStore.SecurityLevel.S3, // 数据库安全级别
   encrypt: false, // 可选参数，指定数据库是否加密，默认不加密
@@ -12,26 +12,60 @@ const STORE_CONFIG :relationalStore.StoreConfig= {
   isReadOnly: false // 可选参数，指定数据库是否以只读方式打开。该参数默认为false，表示数据库可读可写。该参数为true时，只允许从数据库读取数据，不允许对数据库进行写操作，否则会返回错误码801。
 };
 
-let rdbObject:relationalStore.RdbStore;
+'user shared'
+export class DBManager {
 
-export function getRDB(): relationalStore.RdbStore {
-  return rdbObject;
+  public rdbObj:relationalStore.RdbStore|undefined;
+
+  private static INSTANCE:DBManager = new DBManager();
+
+  public static getINSTANCE():DBManager {
+    return DBManager.INSTANCE;
+  }
+
+  private constructor() {
+  }
+
+  public initDBManager(ctx: common.UIAbilityContext) {
+    relationalStore.getRdbStore(ctx, STORE_CONFIG, (err, store) => {
+      if (err) {
+        console.error(`Failed to get RdbStore. Code:${err.code}, message:${err.message}`);
+        return;
+      }
+      console.info('Succeeded in getting RdbStore.');
+
+      MsgDB.getINSTANCE().init(store);
+      // 当数据库创建时，数据库默认版本为0
+      if (store.version === 0) {
+        MsgDB.getINSTANCE().createTable(false);
+        // 设置数据库的版本，入参为大于0的整数
+        store.version = DB_VERSION;
+      }
+      this.rdbObj = store;
+    })
+  }
+
 }
 
-export function initDBManager(ctx: common.UIAbilityContext) {
-  relationalStore.getRdbStore(ctx, STORE_CONFIG, (err, store) => {
-    if (err) {
-      console.error(`Failed to get RdbStore. Code:${err.code}, message:${err.message}`);
-      return;
-    }
-    console.info('Succeeded in getting RdbStore.');
+//let rdbObject:relationalStore.RdbStore;
+// export function getRDB(): relationalStore.RdbStore {
+//   return rdbObject;
+// }
 
-    // 当数据库创建时，数据库默认版本为0
-    if (store.version === 0) {
-      MsgDB.createTable(store, false);
-      // 设置数据库的版本，入参为大于0的整数
-      store.version = DB_VERSION;
-    }
-    rdbObject = store;
-  });
-}
+// export function initDBManager(ctx: common.UIAbilityContext) {
+//   relationalStore.getRdbStore(ctx, STORE_CONFIG, (err, store) => {
+//     if (err) {
+//       console.error(`Failed to get RdbStore. Code:${err.code}, message:${err.message}`);
+//       return;
+//     }
+//     console.info('Succeeded in getting RdbStore.');
+//
+//     // 当数据库创建时，数据库默认版本为0
+//     if (store.version === 0) {
+//       MsgDB.createTable(store, false);
+//       // 设置数据库的版本，入参为大于0的整数
+//       store.version = DB_VERSION;
+//     }
+//     rdbObject = store;
+//   });
+// }

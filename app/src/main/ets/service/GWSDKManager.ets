@@ -18,10 +18,9 @@ import { systemDateTime } from '@kit.BasicServicesKit';
 import { GWPttUserInfo } from './GWPttUserInfo';
 import { HashMap, JSON, List } from '@kit.ArkTS';
 import { OfflineEventBean } from './OfflineEventBean';
-import * as MsgDB from "../db/MsgDB"
-import { getRDB } from "../db/DBManager"
 import { MsgContentBean } from '../db/MsgContentBean';
 import { MsgConversationBean } from '../db/MsgConversationBean';
+import { MsgDB } from '../db/MsgDB';
 
 export interface GWSDKPttEngngObserer {
   onPttEvent: (event: number, data: string, data1: number) => void;
@@ -63,6 +62,10 @@ export class GWSDKManager {
   public setContext(ctx: common.UIAbilityContext) {
     this.context = ctx;
   }
+
+  public getContext() :common.UIAbilityContext|undefined {
+    return this.context;
+}
 
   public registerPttObserver(observer:GWSDKPttEngngObserer|undefined) {
     this.pttObserver = observer;
@@ -429,6 +432,7 @@ export class GWSDKManager {
     }
   }
 
+  private reloginTimer:number = -1;
   private offline(code: number, reason: string) {
     this.userInfo.online = false;
     this.stopTimer();
@@ -436,6 +440,16 @@ export class GWSDKManager {
     this.context?.eventHub.emit('offline', code, reason);
     if (code !== OfflineEventBean.OFFLINE_REASON_LOGOUT_CODE) {
       this.log('need login again');
+      if (this.reloginTimer === -1) {
+        this.reloginTimer = setInterval(() => {
+          if (!this.userInfo.online) {
+            gwsdPttSdk.pttLogin(this.userInfo.account, this.userInfo.password, this.imei, this.iccid);
+          } else {
+            clearInterval(this.reloginTimer);
+            this.reloginTimer = -1;
+          }
+        }, 5 * 1000);
+      }
     }
   }
 
@@ -457,9 +471,9 @@ export class GWSDKManager {
         }
         else {
           let gwMsgBean: GWMsgBean = (json as GWMsgBean);
-          MsgDB.saveMsgContent(getRDB(), this.userInfo.id.toString(), gwMsgBean)
+          MsgDB.getINSTANCE().saveMsgContent(this.userInfo.id.toString(), gwMsgBean)
             .then((msg:MsgContentBean) => {
-              MsgDB.saveOrUpdateConv(getRDB(), msg, false)
+              MsgDB.getINSTANCE().saveOrUpdateConv(msg, false)
                 .then((conv:MsgConversationBean) => {
                   this.context?.eventHub.emit('recvmsg', msg);
                   this.context?.eventHub.emit('recvconv', conv);
