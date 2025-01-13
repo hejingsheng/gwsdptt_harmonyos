@@ -32,10 +32,11 @@ const CHATTING_TIME_SPACE = 120;
 struct Chat {
   @State chatMsgArr :Array<object> = [];
   @State viewItem: TopView.ViewItem = new TopView.ViewItem('');
-  private charparam :ChatParam = new ChatParam(0, 0, '');
+  private chatparam :ChatParam = new ChatParam(0, 0, '');
   private chatlistScroller: Scroller = new Scroller();
   private timer:number = 0;
   private ctx:common.UIAbilityContext|undefined;
+  private callfunc:boolean = false;
 
   private log(msg: string) {
     hilog.info(0x0000, AppAbility.TAG, 'Chat=%{public}s', msg);
@@ -72,7 +73,7 @@ struct Chat {
     }
     this.ctx = getContext(this) as common.UIAbilityContext;
     this.ctx.eventHub.on('recvmsg', (msg: MsgContentBean) => {
-      MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.charparam.convId, this.charparam.convType);
+      MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.chatparam.convId, this.chatparam.convType);
       this.addMessage(msg);
     });
   }
@@ -106,10 +107,10 @@ struct Chat {
   aboutToAppear(): void {
     if (router.getParams() != undefined && router.getParams() != null) {
       let param = router.getParams() as ChatParam;
-      this.charparam = param;
-      this.viewItem = new TopView.ViewItem(this.charparam.convNm)
+      this.chatparam = param;
+      this.viewItem = new TopView.ViewItem(this.chatparam.convNm)
     }
-    MsgDB.getINSTANCE().queryChatRecord(this.getUid(), this.charparam.convId, this.charparam.convType, 0, 30)
+    MsgDB.getINSTANCE().queryChatRecord(this.getUid(), this.chatparam.convId, this.chatparam.convType, 0, 30)
       .then((list:MsgContentBean[]) => {
         this.addMessageList(list);
         this.timer = setInterval(()=>{
@@ -117,7 +118,8 @@ struct Chat {
           clearInterval(this.timer)
         }, 300);
       });
-    MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.charparam.convId, this.charparam.convType);
+    MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.chatparam.convId, this.chatparam.convType);
+    this.callfunc = this.chatparam.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER?true:false;
   }
 
   private async openPhotoPicker() : Promise<ChatFileSelectParam> {
@@ -158,7 +160,7 @@ struct Chat {
     else if (selectFile.filetype === ChatFileMsgParam.VOICE_FILE_TYPE) {
       msgtype = GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE;
     }
-    let gwMsgBean:GWMsgBean = GWSDKManager.getInstance().createMsgBean(this.charparam.convType, this.charparam.convId, this.charparam.convNm, msgtype);
+    let gwMsgBean:GWMsgBean = GWSDKManager.getInstance().createMsgBean(this.chatparam.convType, this.chatparam.convId, this.chatparam.convNm, msgtype);
     let chatFileMsgParam:ChatFileMsgParam = new ChatFileMsgParam('', 0, '', gwMsgBean);
     this.log('file send task:'+filepath);
     chatFileMsgParam.msg = gwMsgBean;
@@ -177,7 +179,7 @@ struct Chat {
       return;
     }
     this.log('start file send task');
-    ChatFileSendService.getINSTACCE().sendMediaFile(chatFileMsgParam, this.ctx!);
+    ChatFileSendService.getINSTANCE().sendMediaFile(chatFileMsgParam, this.ctx!);
   }
 
   build() {
@@ -197,6 +199,7 @@ struct Chat {
             align: VerticalAlign.Top
           }
         })
+        .expandSafeArea([SafeAreaType.KEYBOARD])
       List({scroller: this.chatlistScroller, space: '5vp'}) {
         ForEach(this.chatMsgArr, (item : object)=>{
           ListItem() {
@@ -266,7 +269,7 @@ struct Chat {
         }
       })
       .edgeEffect(EdgeEffect.Fade)
-      ChatInputView({inputViewEvent: {
+      ChatInputView({showCall: this.callfunc, inputViewEvent: {
         onStartVoice:() => {
 
         },
@@ -287,8 +290,8 @@ struct Chat {
           if (value === '') {
             return;
           }
-          let gwMsgBean:GWMsgBean = GWSDKManager.getInstance().createMsgBean(this.charparam.convType, this.charparam.convId,
-            this.charparam.convNm, GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT);
+          let gwMsgBean:GWMsgBean = GWSDKManager.getInstance().createMsgBean(this.chatparam.convType, this.chatparam.convId,
+            this.chatparam.convNm, GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT);
           gwMsgBean.data.content = value;
           GWSDKManager.getInstance().sendMsg(gwMsgBean);
           MsgDB.getINSTANCE().saveMsgContent(this.getUid(), gwMsgBean)
@@ -326,13 +329,13 @@ struct Chat {
         },
         onPttCall:() => {
           let create = false;
-          if (this.charparam.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER) {
+          if (this.chatparam.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER) {
             create = true;
           }
           else {
             create = false;
           }
-          let pttparam = new PttCallParam(this.charparam.convId, this.charparam.convNm, this.charparam.convType, create);
+          let pttparam = new PttCallParam(this.chatparam.convId, this.chatparam.convNm, this.chatparam.convType, create);
           router.pushUrl({
             url: 'pages/PttCall',
             params: pttparam

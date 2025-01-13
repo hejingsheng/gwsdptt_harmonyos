@@ -3,7 +3,9 @@ import { PromptAction, promptAction, router } from '@kit.ArkUI';
 import { JSON } from '@kit.ArkTS';
 import { PttCallParam } from '../service/PttCallParam';
 import { GWSDKManager } from '../service/GWSDKManager';
-import { GWGroupListBean, GWRequestSpeakBean, GWSpeakNotifyBean, GWType } from 'gwsdptt_sdk';
+import { GWGroupListBean, GWRequestSpeakBean, GWSpeakNotifyBean, GWTempGroupBean,
+  GWTempGroupNotifyBean,
+  GWType } from 'gwsdptt_sdk';
 import AppAbility from '../appability/AppAbility';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 
@@ -78,10 +80,27 @@ struct PttCall {
             }
           }
           else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_TMP_GROUP_ACTIVE) {
-
+            let json = JSON.parse(data);
+            let gwTempGroupBean: GWTempGroupBean = (json as GWTempGroupBean);
+            if (gwTempGroupBean.result === 0) {
+              this.log('tmp group success');
+            }
+            else if (gwTempGroupBean.result === 1) {
+              this.log('exit tmp group');
+              router.back();
+            }
+            else {
+              this.log('tmp group fail');
+              router.back();
+            }
           }
           else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_TMP_GROUP_PASSIVE) {
-
+            let json = JSON.parse(data);
+            let gwTempGroupNotifyBean: GWTempGroupNotifyBean = (json as GWTempGroupNotifyBean);
+            if (gwTempGroupNotifyBean.status === 0) {
+              this.log('release tmp group');
+              router.back();
+            }
           }
         },
         onMsgEvent:(event: number, data: string) => {

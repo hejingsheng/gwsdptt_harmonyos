@@ -7,7 +7,9 @@ import { List as array }  from '@kit.ArkTS';
 @Component
 export struct GroupListView {
 
+  @State isRefreshing: boolean = true;
   @State groups: GWGroupBean[] = [];
+  private loadDataTimer:number = -1;
 
   private updateGroupList() {
     let i:number = 0;
@@ -16,6 +18,27 @@ export struct GroupListView {
       this.groups[i] = groupsElement;
       i++;
     }
+    this.isRefreshing = false;
+    this.stopTimer();
+  }
+
+  private loadGroup() {
+    GWSDKManager.getInstance().queryGroup();
+    this.startTimer();
+  }
+
+  private startTimer() {
+    this.loadDataTimer = setInterval(()=>{
+      this.isRefreshing = false;
+      // query fail
+    }, 5000);
+  }
+
+  private stopTimer() {
+    if (this.loadDataTimer != -1) {
+      clearInterval(this.loadDataTimer);
+    }
+    this.loadDataTimer = -1;
   }
 
   aboutToAppear(): void {
@@ -29,7 +52,7 @@ export struct GroupListView {
 
       }
     });
-    GWSDKManager.getInstance().queryGroup();
+    this.loadGroup();
   }
 
   aboutToDisappear(): void {
@@ -37,33 +60,38 @@ export struct GroupListView {
   }
 
   build() {
-    List() {
-      ForEach(this.groups, (item : GWGroupBean)=>{
-        ListItem() {
-          ListItemView({
-            listIcon: $r('app.media.ic_group_p_blue'),
-            listContent: item.name
+    Refresh({ refreshing: $$this.isRefreshing }){
+      List() {
+        ForEach(this.groups, (item : GWGroupBean)=>{
+          ListItem() {
+            ListItemView({
+              listIcon: $r('app.media.ic_group_p_blue'),
+              listContent: item.name
+            })
+          }
+          .onClick(()=>{
+            let param = new GWGroupBean();
+            param.gid = item.gid;
+            param.name = item.name;
+            param.type = item.type;
+            router.pushUrl({
+              url:'pages/GroupDetail',
+              params: param
+            });
           })
-        }
-        .onClick(()=>{
-          let param = new GWGroupBean();
-          param.gid = item.gid;
-          param.name = item.name;
-          param.type = item.type;
-          router.pushUrl({
-            url:'pages/GroupDetail',
-            params: param
-          });
-        })
-      },(item: GWGroupBean) => JSON.stringify(item.gid))
+        },(item: GWGroupBean) => JSON.stringify(item.gid))
+      }
+      .divider({
+        strokeWidth: $r('app.float.line_height'),
+        color: $r('app.color.colorLine2'),
+        startMargin: '10vp',
+        endMargin: '10vp'
+      })
+      .width('100%')
+      .height('100%')
     }
-    .divider({
-      strokeWidth: $r('app.float.line_height'),
-      color: $r('app.color.colorLine2'),
-      startMargin: '10vp',
-      endMargin: '10vp'
+    .onRefreshing(()=>{
+      this.loadGroup();
     })
-    .width('100%')
-    .height('100%')
   }
 }

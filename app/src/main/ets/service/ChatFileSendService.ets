@@ -81,10 +81,10 @@ async function fileUpload(fileUploadParam:ChatFileUploadParam): Promise<ChatFile
 
 export class ChatFileSendService {
 
-  private static INSTACCE:ChatFileSendService = new ChatFileSendService();
+  private static INSTANCE:ChatFileSendService = new ChatFileSendService();
 
-  public static getINSTACCE() {
-    return ChatFileSendService.INSTACCE;
+  public static getINSTANCE() {
+    return ChatFileSendService.INSTANCE;
   }
 
   private log(msg: string) {

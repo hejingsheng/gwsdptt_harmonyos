@@ -3,6 +3,7 @@ struct AttachBtnView {
   @State isPress:boolean = false;
   @State imgNor?:Resource = undefined;
   @State imgSel?:Resource = undefined;
+
   private text:ResourceStr = '';
   build() {
     Column() {
@@ -49,10 +50,11 @@ export struct ChatInputView {
   @State textInputForce:boolean = false;
   @State voiceSend:boolean = false;
   @State showAttach:boolean = false;
-
-  private inputViewEvent?:ChatInputViewEvent;
   @State txt:string = '';
   @State press:boolean = false;
+
+  private inputViewEvent?:ChatInputViewEvent;
+  private showCall:boolean = true;
 
   build() {
     Column() {
@@ -211,6 +213,7 @@ export struct ChatInputView {
             .onClick(()=>{
               this.inputViewEvent?.onVoiceCall();
             })
+            .visibility(this.showCall?Visibility.Visible:Visibility.Hidden)
           AttachBtnView({
             imgNor:$r('app.media.ic_btn_videocall'),
             imgSel:$r('app.media.ic_btn_videocall_s'),
@@ -221,6 +224,7 @@ export struct ChatInputView {
             .onClick(()=>{
               this.inputViewEvent?.onVideoCall();
             })
+            .visibility(this.showCall?Visibility.Visible:Visibility.Hidden)
         }
         .width('100%')
         .height($r('app.float.attach_btn_height'))
