@@ -21,6 +21,10 @@
       "value": "#2E6FB2"
     },
     {
+      "name": "ptt_view_color",
+      "value": "#55C0F6"
+    },
+    {
       "name": "text_hint_color",
       "value": "#777777"
     },

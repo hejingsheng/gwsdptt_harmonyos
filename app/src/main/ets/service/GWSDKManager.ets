@@ -1,10 +1,12 @@
 import {
   GWCurrentGroupNotifyBean,
+  GWDuplexBean,
   GWKickoutNotifyBean,
   GWMemberInfoBean,
   GWMsgBaseBean,
   GWMsgBean,
   gwsdPttSdk,
+  GWTempGroupNotifyBean,
   MemberInfo,
   MsgContent} from 'gwsdptt_sdk'
 import { GWLoginResultBean } from 'gwsdptt_sdk';
@@ -165,7 +167,7 @@ export class GWSDKManager {
     let gwMsgBean:GWMsgBean = new GWMsgBean();
     gwMsgBean.from = sendId;
     gwMsgBean.type = msgtype;
-    let ts = systemDateTime.getTime(false)/1000;
+    let ts = Math.floor(systemDateTime.getTime(false)/1000);
     gwMsgBean.time = ts;
     let msg:MsgContent = new MsgContent();
     msg.content = '';
@@ -185,7 +187,7 @@ export class GWSDKManager {
     let gwMsgBean:GWMsgBean = new GWMsgBean();
     gwMsgBean.from = this.userInfo.id.toString();
     gwMsgBean.type = msgtype;
-    let ts = systemDateTime.getTime(false)/1000;
+    let ts = Math.floor(systemDateTime.getTime(false)/1000);
     gwMsgBean.time = ts;
     let msg:MsgContent = new MsgContent();
     msg.content = '';
@@ -312,66 +314,25 @@ export class GWSDKManager {
 
     }
     else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_TMP_GROUP_PASSIVE) {
-    //   GWTempGroupNotifyBean gwTempGroupNotifyBean = JSON.parseObject(data, GWTempGroupNotifyBean.class);
-    //   if (gwTempGroupNotifyBean.getName() != null && gwTempGroupNotifyBean.getName() != "") {
-    //     CallManager.getManager().checkCallStateSwitch(CallManager.CALL_STATE_PTT_TMP_GROUP_CALL, (notice, caninterrupt, currentstate, nextstate) -> {
-    //       if (caninterrupt) {
-    //         PttCallActivity.startAct(AppManager.getApp(), gwTempGroupNotifyBean.getUid(), gwTempGroupNotifyBean.getName(), GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER ,false);
-    //       } else {
-    //       int[] ids = new int[1];
-    //       ids[0] = 0;
-    //       tempGroup(ids, 1);
-    //     }
-    //   });
-    // } else {
-    //   log("remote releas tmp group");
-    // }
+      let json = JSON.parse(data);
+      let gwTempGroupNotifyBean: GWTempGroupNotifyBean = (json as GWTempGroupNotifyBean);
+      if (gwTempGroupNotifyBean.name !== undefined && gwTempGroupNotifyBean.name !== '') {
+
+      }
     }
     else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_DUPLEX) {
-      // GWDuplexBean gwDuplexBean = JSON.parseObject(data, GWDuplexBean.class);
-      // if (gwDuplexBean.getResult() == 0) {
-      //   if (gwDuplexBean.getStatus() == GWType.GW_DUPLEX_STATUS.GW_PTT_DUPLEX_STATUS_INVIET) {
-      //     if (gwDuplexBean.getUid() != 0) {
-      //       CallManager.getManager().checkCallStateSwitch(CallManager.CALL_STATE_AUDIO_VIDEO_CALL, (notice, caninterrupt, currentstate, nextstate) -> {
-      //         if (notice) {
-      //           ScreenWakeUtils.getInstace(AppManager.getApp()).openScreenAndUnLockOnly(true);
-      //           NotifiDataBean notifiDataBean = new NotifiDataBean();
-      //           notifiDataBean.setRecvNm(gwDuplexBean.getName());
-      //           notifiDataBean.setRecvId(gwDuplexBean.getUid());
-      //           notifiDataBean.setType(NotifiDataBean.NOTIFI_TYPE_AUDIO_CALL);
-      //           MainService.startServerWithData(AppManager.getApp(), notifiDataBean);
-      //         } else {
-      //         if (caninterrupt) {
-      //           if (currentstate == CallManager.CALL_STATE_PTT_TMP_GROUP_CALL) {
-      //             EventBus.getDefault().post(new ExitTmpGroupEventBean());
-      //             Observable.timer(500, TimeUnit.MILLISECONDS)
-      //               .observeOn(AndroidSchedulers.mainThread())
-      //               .subscribe(aLong -> {
-      //                 AudioCallActivity.startAct(AppManager.getApp(), gwDuplexBean.getUid(), gwDuplexBean.getName(), false);
-      //               });
-      //           } else {
-      //             AudioCallActivity.startAct(AppManager.getApp(), gwDuplexBean.getUid(), gwDuplexBean.getName(), false);
-      //           }
-      //         } else {
-      //         // need notice
-      //         NotifiDataBean notifiDataBean = new NotifiDataBean();
-      //         notifiDataBean.setRecvNm(gwDuplexBean.getName());
-      //         notifiDataBean.setRecvId(gwDuplexBean.getUid());
-      //         notifiDataBean.setType(NotifiDataBean.NOTIFI_TYPE_AUDIO_CALL);
-      //         notifiDataBean.setForceNotice(true);
-      //         MainService.startServerWithData(AppManager.getApp(), notifiDataBean);
-      //       }
-      //     }
-      //   });
-      // }
-    // } else if (gwDuplexBean.getStatus() == GWType.GW_DUPLEX_STATUS.GW_PTT_DUPLEX_STATUS_END) {
-    //   if (CallManager.getManager().getCallState() != CallManager.CALL_STATE_AUDIO_VIDEO_CALL) {
-    //     NotifiDataBean notifiDataBean = new NotifiDataBean();
-    //     notifiDataBean.setType(NotifiDataBean.NOTIFI_TYPE_CALL_END);
-    //     notifiDataBean.setForceNotice(true);
-    //     MainService.startServerWithData(AppManager.getApp(), notifiDataBean);
-    //   }
-    // }
+      let json = JSON.parse(data);
+      let gwDuplexBean: GWDuplexBean = (json as GWDuplexBean);
+      if (gwDuplexBean.result === 0) {
+        if (gwDuplexBean.status === GWType.GW_DUPLEX_STATUS.GW_PTT_DUPLEX_STATUS_INVIET) {
+          if (gwDuplexBean.uid !== 0) {
+
+          }
+        }
+        else if (gwDuplexBean.status === GWType.GW_DUPLEX_STATUS.GW_PTT_DUPLEX_STATUS_END) {
+
+        }
+      }
     }
     else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_LOGOUT) {
       this.log("logout");

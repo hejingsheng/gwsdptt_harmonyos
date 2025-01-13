@@ -1,16 +1,36 @@
 import * as TopView from '../view/TopView'
-import { router } from '@kit.ArkUI';
+import { PromptAction, promptAction, router } from '@kit.ArkUI';
+import { JSON } from '@kit.ArkTS';
 import { PttCallParam } from '../service/PttCallParam';
 import { GWSDKManager } from '../service/GWSDKManager';
-import { GWType } from 'gwsdptt_sdk';
+import { GWGroupListBean, GWRequestSpeakBean, GWSpeakNotifyBean, GWType } from 'gwsdptt_sdk';
+import AppAbility from '../appability/AppAbility';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 
 @Entry
 @Component
 struct PttCall {
   @State viewItem: TopView.ViewItem = new TopView.ViewItem('');
-  @State animalState:AnimationStatus = AnimationStatus.Stopped;
-
+  @State spkAnimalState:AnimationStatus = AnimationStatus.Stopped;
+  @State pttAnimalState:AnimationStatus = AnimationStatus.Stopped;
+  @State speakinfo:ResourceStr = '';
   private pttParam :PttCallParam = new PttCallParam(0, '', 0, false);
+  private spkSucc:boolean = false;
+
+  private log(msg: string) {
+    hilog.info(0x0000, AppAbility.TAG, 'PttCall=%{public}s', msg);
+  }
+
+  private updateSpeaker(state: number, txt: ResourceStr) {
+    if (state === 1) {
+      this.spkAnimalState = AnimationStatus.Running;
+      this.speakinfo = txt;
+    }
+    else {
+      this.spkAnimalState = AnimationStatus.Stopped;
+      this.speakinfo = $r('app.string.hint_Idle_waiting');
+    }
+  }
 
   aboutToAppear(): void {
     if (router.getParams() != undefined && router.getParams() != null) {
@@ -18,7 +38,51 @@ struct PttCall {
       this.pttParam = param;
       GWSDKManager.getInstance().registerPttObserver({
         onPttEvent:(event: number, data: string, data1: number) => {
+          if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_JOIN_GROUP) {
+            let json = JSON.parse(data);
+            let gwGroupListBean: GWGroupListBean = (json as GWGroupListBean);
+            if (gwGroupListBean.result === 0) {
+              this.log('join group success');
+            } else {
+              promptAction.showToast({
+                message: $r('app.string.failure'),
+                duration: 2000
+              });
+              router.back();
+            }
+          }
+          else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_SPEAK) {
+            let json = JSON.parse(data);
+            let gwSpeakNotifyBean: GWSpeakNotifyBean = (json as GWSpeakNotifyBean);
+            if (gwSpeakNotifyBean.uid !== 0) {
+              this.updateSpeaker(1, gwSpeakNotifyBean.name);
+            }
+            else {
+              this.updateSpeaker(2, '');
+            }
+          }
+          else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_REQUEST_MIC) {
+            let json = JSON.parse(data);
+            let gwRequestSpeakBean: GWRequestSpeakBean = (json as GWRequestSpeakBean);
+            if (gwRequestSpeakBean.result !== 0) {
+              this.log('request speak fail');
+              promptAction.showToast({
+                message: $r('app.string.failure'),
+                duration: 2000
+              });
+            }
+            else {
+              this.log('request speak success');
+              this.updateSpeaker(1, $r('app.string.local_equipment_speak'));
+              this.spkSucc = true;
+            }
+          }
+          else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_TMP_GROUP_ACTIVE) {
 
+          }
+          else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_TMP_GROUP_PASSIVE) {
+
+          }
         },
         onMsgEvent:(event: number, data: string) => {
 
@@ -82,21 +146,21 @@ struct PttCall {
             left: { anchor: '__container__', align: HorizontalAlign.Start }
           })
           .margin({
-            left:'10vp',
-            top: '30vp'
+            right: $r('app.float.left_right_margin_size'),
+            top:$r('app.float.pttcall_top_magin_size')
           })
           .fontColor(Color.White)
           .fontSize($r('app.float.text_size_normalX'))
         Image($r('app.media.ic_open_voice'))
-          .width('30vp')
-          .height('30vp')
+          .width($r('app.float.pttcall_voice_toggle_size'))
+          .height($r('app.float.pttcall_voice_toggle_size'))
           .alignRules({
             top: { anchor: '__container__', align: VerticalAlign.Top },
             right: { anchor: '__container__', align: HorizontalAlign.End }
           })
           .margin({
-            right:'10vp',
-            top:'30vp'
+            right: $r('app.float.left_right_margin_size'),
+            top:$r('app.float.pttcall_top_magin_size')
           })
           .onClick(()=>{
 
@@ -108,91 +172,65 @@ struct PttCall {
             middle: { anchor: '__container__', align: HorizontalAlign.Center }
           })
           .fontColor(Color.White)
-        // Image($r('app.media.ic_animation_speak_10'))
-        //   .width('100%')
-        //   .height('10vp')
-        //   .alignRules({
-        //     bottom: { anchor: 'speakinfo', align: VerticalAlign.Top }
-        //   })
         ImageAnimator()
           .images([
             {
               src: $r('app.media.ic_animation_speak_01'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_02'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_03'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_04'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_05'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_06'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_07'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_08'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_09'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             },
             {
               src: $r('app.media.ic_animation_speak_10'),
-              width: '100%',
-              height: '20vp',
               duration: 150
             }
           ])
-          .state(this.animalState).reverse(false)
+          .state(this.spkAnimalState).reverse(false)
           .fillMode(FillMode.None).iterations(-1)
-          .width('100%').height('10vp')
+          .width('100%').height($r('app.float.pttcall_animal_height'))
           .margin({ top: '15vp', bottom: '5vp' })
           .alignRules({
             bottom: { anchor: 'speakinfo', align: VerticalAlign.Top }
           })
 
         Row(){
-          Text('SPEAKING')
+          Text(this.speakinfo)
             .fontColor(Color.White)
             .fontSize($r('app.float.text_size_largeX'))
         }
         .id('speakinfo')
         .width('100%')
-        .height('30vp')
+        .height($r('app.float.item_size_s'))
         .justifyContent(FlexAlign.Center)
         .alignRules({
           bottom: { anchor: '__container__', align: VerticalAlign.Bottom }
@@ -200,7 +238,7 @@ struct PttCall {
       }
       .width('100%')
       .height('50%')
-      .backgroundColor('#55C0F6')
+      .backgroundColor($r('app.color.ptt_view_color'))
       RelativeContainer() {
         ImageAnimator()
           .images([
@@ -217,22 +255,26 @@ struct PttCall {
               duration: 300
             }
           ])
-          .state(this.animalState).reverse(false)
+          .state(this.pttAnimalState).reverse(false)
           .fillMode(FillMode.None).iterations(-1)
-          .width('160vp')
-          .height('160vp')
+          .width($r('app.float.ptt_button_size'))
+          .height($r('app.float.ptt_button_size'))
           .alignRules({
             center: { anchor: '__container__', align: VerticalAlign.Center },
             middle: { anchor: '__container__', align: HorizontalAlign.Center }
           })
           .onTouch((event)=>{
             if (event.type === TouchType.Down) {
-              this.animalState = AnimationStatus.Running;
+              this.pttAnimalState = AnimationStatus.Running;
+              GWSDKManager.getInstance().startSpeak();
             } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
-              this.animalState = AnimationStatus.Stopped;
+              this.pttAnimalState = AnimationStatus.Stopped;
+              GWSDKManager.getInstance().stopSpeak();
+              if (this.spkSucc) {
+                this.updateSpeaker(2, '');
+              }
             }
           })
-
       }
       .width('100%')
       .height('50%')

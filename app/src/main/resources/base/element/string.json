@@ -13,6 +13,18 @@
       "value": "Cluster comm"
     },
     {
+      "name": "permission_microphone",
+      "value": "Allow the application to use a microphone in recording audio scenes."
+    },
+    {
+      "name": "successed",
+      "value": "success"
+    },
+    {
+      "name": "failure",
+      "value": "Failed"
+    },
+    {
       "name": "title_welcome",
       "value": "Welcome to use system"
     },
@@ -195,6 +207,14 @@
     {
       "name": "hint_poc_current_member",
       "value": "Current user: %1$s"
+    },
+    {
+      "name": "hint_Idle_waiting",
+      "value": "Waiting idle"
+    },
+    {
+      "name": "local_equipment_speak",
+      "value": "Local device speaking"
     }
   ]
 }

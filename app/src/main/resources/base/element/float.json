@@ -17,6 +17,10 @@
       "value": "70vp"
     },
     {
+      "name": "item_size_s",
+      "value": "30vp"
+    },
+    {
       "name": "item_size",
       "value": "50vp"
     },
@@ -111,6 +115,26 @@
     {
       "name": "photo_view_size",
       "value": "50vp"
+    },
+    {
+      "name": "pttcall_voice_toggle_size",
+      "value": "30vp"
+    },
+    {
+      "name": "left_right_margin_size",
+      "value": "10vp"
+    },
+    {
+      "name": "pttcall_top_magin_size",
+      "value": "30vp"
+    },
+    {
+      "name": "pttcall_animal_height",
+      "value": "13vp"
+    },
+    {
+      "name": "ptt_button_size",
+      "value": "160vp"
     }
   ]
 }

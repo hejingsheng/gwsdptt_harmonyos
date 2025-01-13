@@ -13,16 +13,20 @@
       "value": "Cluster comm"
     },
     {
+      "name": "successed",
+      "value": "success"
+    },
+    {
+      "name": "title_welcome",
+      "value": "Welcome to use system"
+    },
+    {
       "name": "hint_account",
       "value": "Account"
     },
     {
       "name": "hint_password",
       "value": "Password"
-    },
-    {
-      "name": "title_welcome",
-      "value": "Welcome to use system"
     },
     {
       "name": "btn_login",
@@ -195,6 +199,22 @@
     {
       "name": "title_temp_call",
       "value": "Temporary call"
+    },
+    {
+      "name": "failure",
+      "value": "Failed"
+    },
+    {
+      "name": "hint_Idle_waiting",
+      "value": "Waiting idle"
+    },
+    {
+      "name": "local_equipment_speak",
+      "value": "Local device speaking"
+    },
+    {
+      "name": "permission_microphone",
+      "value": "Allow the application to use a microphone in recording audio scenes."
     }
   ]
 }

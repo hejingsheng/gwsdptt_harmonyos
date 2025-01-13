@@ -195,6 +195,26 @@
     {
       "name": "title_temp_call",
       "value": "临时呼叫"
+    },
+    {
+      "name": "successed",
+      "value": "成功"
+    },
+    {
+      "name": "failure",
+      "value": "失败"
+    },
+    {
+      "name": "hint_Idle_waiting",
+      "value": "空闲等待"
+    },
+    {
+      "name": "local_equipment_speak",
+      "value": "本机正在讲话"
+    },
+    {
+      "name": "permission_microphone",
+      "value": "允许应用使用麦克风录音"
     }
   ]
 }
