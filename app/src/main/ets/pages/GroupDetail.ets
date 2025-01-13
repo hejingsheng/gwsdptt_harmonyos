@@ -1,7 +1,10 @@
 import * as TopView from '../view/TopView'
-import { router } from '@kit.ArkUI';
+import { promptAction, router } from '@kit.ArkUI';
 import { ChatParam } from '../service/ChatModel';
 import { GWGroupBean } from 'gwsdptt_sdk/src/main/ets/bean/GWGroupListBean';
+import { PttCallParam } from '../service/PttCallParam';
+import { MsgDB } from '../db/MsgDB';
+import { GWSDKManager } from '../service/GWSDKManager';
 
 @Component
 struct FuncItemView {
@@ -45,6 +48,11 @@ struct GroupDetail {
   @State groupname: string = '';
   @State gid: number = 0;
   private type: number = 0;
+
+  private getUid() : string {
+    return GWSDKManager.getInstance().getUserInfo().id.toString();
+  }
+
   aboutToAppear(): void {
     this.viewItem.rightImg = $r('app.media.ic_more_detail_day');
     this.viewItem.rightImgSelect = $r('app.media.ic_more_detail_p');
@@ -147,7 +155,6 @@ struct GroupDetail {
         .margin({
           top:30
         })
-
       FuncItemView({image:$r('app.media.ic_chat'), text:$r('app.string.send_msg')})
         .onClick(()=>{
           let chatparam = new ChatParam(this.gid, this.type, this.groupname)
@@ -162,18 +169,38 @@ struct GroupDetail {
         .color($r('app.color.colorLine'))
         .strokeWidth(1)
       FuncItemView({image:$r('app.media.ic_pttcall'), text:$r('app.string.half_duplex')})
+        .onClick(()=>{
+          let pttparam = new PttCallParam(this.gid, this.groupname, this.type, false);
+          router.pushUrl({
+            url: 'pages/PttCall',
+            params: pttparam
+          })
+        })
       Divider()
         .width('100%')
         .vertical(false)
         .color($r('app.color.colorLine'))
         .strokeWidth(1)
       FuncItemView({image:$r('app.media.ic_notice'), text:$r('app.string.group_announcement')})
+        .onClick(()=>{
+          promptAction.showToast({
+            message:$r('app.string.hint_exploit_ing'),
+            duration:2000
+          });
+        })
       Divider()
         .width('100%')
         .vertical(false)
         .color($r('app.color.colorLine'))
         .strokeWidth(1)
       FuncItemView({image:$r('app.media.ic_delete'), text:$r('app.string.del_msg')})
+        .onClick(()=>{
+          MsgDB.getINSTANCE().deleteConv(this.getUid(), this.gid, this.type);
+          promptAction.showToast({
+            message:$r('app.string.successed'),
+            duration:2000
+          });
+        })
       Divider()
         .width('100%')
         .vertical(false)
