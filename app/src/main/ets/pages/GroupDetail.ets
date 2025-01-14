@@ -2,7 +2,7 @@ import * as TopView from '../view/TopView'
 import { promptAction, router } from '@kit.ArkUI';
 import { ChatParam } from '../service/ChatModel';
 import { GWGroupBean } from 'gwsdptt_sdk/src/main/ets/bean/GWGroupListBean';
-import { PttCallParam } from '../service/PttCallParam';
+import { PttCallParam } from '../service/CallParam';
 import { MsgDB } from '../db/MsgDB';
 import { GWSDKManager } from '../service/GWSDKManager';
 
@@ -170,10 +170,10 @@ struct GroupDetail {
         .strokeWidth(1)
       FuncItemView({image:$r('app.media.ic_pttcall'), text:$r('app.string.half_duplex')})
         .onClick(()=>{
-          let pttparam = new PttCallParam(this.gid, this.groupname, this.type, false);
+          let pttCallparam = new PttCallParam(this.gid, this.groupname, this.type, false);
           router.pushUrl({
             url: 'pages/PttCall',
-            params: pttparam
+            params: pttCallparam
           })
         })
       Divider()

@@ -1,9 +1,9 @@
 {
   "name": "app",
-  "version": "1.0.0",
-  "description": "Please describe the basic information.",
+  "version": "1.0.1",
+  "description": "gwsd open ptt",
   "main": "",
-  "author": "",
+  "author": "Jack He",
   "license": "",
   "dependencies": {
     "gwsdptt_sdk": "file:./libs/gwsdptt.har",

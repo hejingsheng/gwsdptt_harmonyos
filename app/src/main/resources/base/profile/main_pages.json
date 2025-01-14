@@ -9,6 +9,7 @@
     "pages/PhotoShow",
     "pages/comm_page/PhotoPicker",
     "pages/VideoShow",
-    "pages/PttCall"
+    "pages/PttCall",
+    "pages/AudioCall"
   ]
 }

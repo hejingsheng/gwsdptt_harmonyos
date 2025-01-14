@@ -10,6 +10,17 @@ export class PttCallParam {
     this.pttType = pttType;
     this.pttCreate = pttCreate;
   }
+}
 
+export class AudioCallParam {
+  public remoteId: number;
+  public remoteName: string;
+  public caller: boolean;
+
+  constructor(remoteId: number, remoteName: string, caller: boolean) {
+    this.remoteId = remoteId;
+    this.remoteName = remoteName;
+    this.caller = caller;
+  }
 
 }

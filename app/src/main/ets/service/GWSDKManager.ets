@@ -27,7 +27,7 @@ import { NotifiDataBean } from './NotifiDataBean';
 import { NotificationService } from './NotificationService';
 import { CallManager } from './CallManager';
 import { router } from '@kit.ArkUI';
-import { PttCallParam } from './PttCallParam';
+import { AudioCallParam, PttCallParam } from './CallParam';
 
 export interface GWSDKPttEngngObserer {
   onPttEvent: (event: number, data: string, data1: number) => void;
@@ -324,10 +324,10 @@ export class GWSDKManager {
       if (gwTempGroupNotifyBean.name !== undefined && gwTempGroupNotifyBean.name !== '') {
         CallManager.getInstance().checkCallStateSwitch(CallManager.CALL_STATE_PTT_TMP_GROUP_CALL).then((result) => {
           if (result.interrupt) {
-            let pttparam = new PttCallParam(gwTempGroupNotifyBean.uid, gwTempGroupNotifyBean.name, GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER, false);
+            let pttCallparam = new PttCallParam(gwTempGroupNotifyBean.uid, gwTempGroupNotifyBean.name, GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER, false);
             router.pushUrl({
               url: 'pages/PttCall',
-              params: pttparam
+              params: pttCallparam
             })
           }
           else {
@@ -347,7 +347,46 @@ export class GWSDKManager {
       if (gwDuplexBean.result === 0) {
         if (gwDuplexBean.status === GWType.GW_DUPLEX_STATUS.GW_PTT_DUPLEX_STATUS_INVIET) {
           if (gwDuplexBean.uid !== 0) {
+            CallManager.getInstance().checkCallStateSwitch(CallManager.CALL_STATE_AUDIO_VIDEO_CALL).then((data)=>{
+              if (data.notice) {
+                // wake screen
+                let notifiDataBean = new NotifiDataBean();
+                notifiDataBean.recvNm = gwDuplexBean.name;
+                notifiDataBean.recvId = gwDuplexBean.uid;
+                notifiDataBean.type = NotifiDataBean.NOTIFI_TYPE_AUDIO_CALL;
+              }
+              else {
+                if (data.interrupt) {
+                  if (data.oldstate === CallManager.CALL_STATE_PTT_TMP_GROUP_CALL) {
+                    setTimeout(() => {
+                      // goto audio call
+                      let audioCallparam = new AudioCallParam(gwDuplexBean.uid, gwDuplexBean.name, false);
+                      router.pushUrl({
+                        url: 'pages/AudioCall',
+                        params: audioCallparam
+                      })
+                    }, 500);
+                  }
+                  else {
+                    // goto audio call
+                    let audioCallparam = new AudioCallParam(gwDuplexBean.uid, gwDuplexBean.name, false);
+                    router.pushUrl({
+                      url: 'pages/AudioCall',
+                      params: audioCallparam
+                    })
+                  }
+                }
+                else {
+                  // need notice
+                  let notifiDataBean = new NotifiDataBean();
+                  notifiDataBean.recvNm = gwDuplexBean.name;
+                  notifiDataBean.recvId = gwDuplexBean.uid;
+                  notifiDataBean.type = NotifiDataBean.NOTIFI_TYPE_AUDIO_CALL;
+                  notifiDataBean.forceNotice = true;
 
+                }
+              }
+            });
           }
         }
         else if (gwDuplexBean.status === GWType.GW_DUPLEX_STATUS.GW_PTT_DUPLEX_STATUS_END) {

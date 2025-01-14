@@ -43,7 +43,7 @@ export struct ChatAVCallToItemView {
         }
         .width('auto')
         .height($r('app.float.chat_voice_item_height'))
-        .backgroundColor($r('app.color.chat_txt_from_bg_color'))
+        .backgroundColor($r('app.color.chat_txt_to_bg_color'))
         .clip(true)
         .borderRadius(5)
         .margin({

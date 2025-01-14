@@ -23,7 +23,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { JSON } from '@kit.ArkTS';
 import AppAbility from '../appability/AppAbility';
 import { ChatFileSendService } from '../service/ChatFileSendService';
-import { PttCallParam } from '../service/PttCallParam';
+import { AudioCallParam, PttCallParam } from '../service/CallParam';
 
 const CHATTING_TIME_SPACE = 120;
 
@@ -335,15 +335,17 @@ struct Chat {
           else {
             create = false;
           }
-          let pttparam = new PttCallParam(this.chatparam.convId, this.chatparam.convNm, this.chatparam.convType, create);
+          let pttCallparam = new PttCallParam(this.chatparam.convId, this.chatparam.convNm, this.chatparam.convType, create);
           router.pushUrl({
             url: 'pages/PttCall',
-            params: pttparam
+            params: pttCallparam
           })
         },
         onVoiceCall:() => {
+          let audioCallparam = new AudioCallParam(this.chatparam.convId, this.chatparam.convNm, true);
           router.pushUrl({
-            url: 'pages/comm_page/PhotoPicker'
+            url: 'pages/AudioCall',
+            params: audioCallparam
           })
         },
         onVideoCall:() => {

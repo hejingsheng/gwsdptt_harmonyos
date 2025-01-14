@@ -1,7 +1,7 @@
 import * as TopView from '../view/TopView'
 import { PromptAction, promptAction, router } from '@kit.ArkUI';
 import { JSON } from '@kit.ArkTS';
-import { PttCallParam } from '../service/PttCallParam';
+import { PttCallParam } from '../service/CallParam';
 import { GWSDKManager } from '../service/GWSDKManager';
 import { GWGroupListBean, GWRequestSpeakBean, GWSpeakNotifyBean, GWTempGroupBean,
   GWTempGroupNotifyBean,

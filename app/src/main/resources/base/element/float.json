@@ -135,6 +135,18 @@
     {
       "name": "ptt_button_size",
       "value": "160vp"
+    },
+    {
+      "name": "call_image_size",
+      "value": "70vp"
+    },
+    {
+      "name": "audiocall_info_top_size",
+      "value": "30vp"
+    },
+    {
+      "name": "audiocall_info_bottom_size",
+      "value": "50vp"
     }
   ]
 }
