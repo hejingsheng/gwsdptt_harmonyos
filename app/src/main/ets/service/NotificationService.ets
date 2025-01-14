@@ -7,9 +7,6 @@ import { GWType } from "gwsdptt_sdk";
 import { notificationManager } from "@kit.NotificationKit";
 import { systemDateTime } from "@kit.BasicServicesKit";
 
-
-interface GeneratedObjectLiteralInterface_1 {}
-
 export class NotificationService {
 
   static INSTANCE:NotificationService = new NotificationService();
