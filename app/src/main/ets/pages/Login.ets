@@ -151,7 +151,7 @@ struct Login {
         Blank().height(50)
         Button($r('app.string.btn_login')).width(150)
           .onClick(()=>{
-            hilog.info(0x0000, 'GWAPP', 'login account %{public}s, password %{private}s', this.account, this.password);
+            this.log('login account:'+this.account);
             this.login();
           })
       }

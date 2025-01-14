@@ -105,7 +105,7 @@ export class NotificationService {
         actionType: wantAgent.OperationType.START_ABILITY,
         requestCode: 100,
         extraInfo: {
-          'url': 'pages/Chat',
+          'type': 'Msg',
           'convId': notifiDataBean.recvId,
           'convNm': convNm,
           'convType': notifiDataBean.recvType

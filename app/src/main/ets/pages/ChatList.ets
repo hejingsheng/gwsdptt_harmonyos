@@ -4,6 +4,7 @@ import { GWSDKManager } from "../service/GWSDKManager";
 import { MsgConversationBean } from "../db/MsgConversationBean";
 import { hilog } from "@kit.PerformanceAnalysisKit";
 import { common } from "@kit.AbilityKit";
+import AppAbility from "../appability/AppAbility";
 
 
 @Component
@@ -12,6 +13,10 @@ export struct ChatListView {
   @State conversations :Array<MsgConversationBean> = [];
   @Link allUnReadMsgNum:number;
   private ctx:common.UIAbilityContext|undefined;
+
+  private log(msg: string) {
+    hilog.info(0x0000, AppAbility.TAG, 'ChatListView=%{public}s', msg);
+  }
 
   private getUid() : string {
     return GWSDKManager.getInstance().getUserInfo().id.toString();
@@ -23,10 +28,11 @@ export struct ChatListView {
       num += conversationsElement.msgUnReadCnt;
     }
     this.allUnReadMsgNum = num;
+    this.log('all unread msg='+num);
   }
 
   aboutToAppear(): void {
-    hilog.info(0x0000, 'GWAPP', 'aboutToAppear');
+    this.log('aboutToAppear');
     MsgDB.getINSTANCE().queryConvList(this.getUid())
       .then((list:MsgConversationBean[]) => {
         this.conversations = list;
@@ -67,7 +73,7 @@ export struct ChatListView {
   }
 
   aboutToDisappear(): void {
-    hilog.info(0x0000, 'GWAPP', 'aboutToDisappear');
+    this.log('aboutToDisappear');
   }
 
   build() {

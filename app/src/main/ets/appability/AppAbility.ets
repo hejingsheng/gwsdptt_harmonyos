@@ -22,14 +22,17 @@ export default class AppAbility extends UIAbility {
     hilog.info(0x0000, AppAbility.TAG, '%{public}s', 'Ability onNewWant');
     let param: Record<string, Object>|undefined = want.parameters;
     if (param !== undefined) {
-      let url = param['url'] as string;
-      if (url === 'pages/Chat') {
+      let type = param['type'] as string;
+      if (type === 'Msg') {
         // goto chat
         let chatparam = new ChatParam(param['convId'] as number, param['convType'] as number, param['convNm'] as string)
         router.pushUrl({
           url: 'pages/Chat',
           params: chatparam
-        })
+        });
+      }
+      else if (type === 'VoiceCall') {
+
       }
     }
   }
