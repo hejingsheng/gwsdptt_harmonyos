@@ -25,6 +25,9 @@ import { MsgConversationBean } from '../db/MsgConversationBean';
 import { MsgDB } from '../db/MsgDB';
 import { NotifiDataBean } from './NotifiDataBean';
 import { NotificationService } from './NotificationService';
+import { CallManager } from './CallManager';
+import { router } from '@kit.ArkUI';
+import { PttCallParam } from './PttCallParam';
 
 export interface GWSDKPttEngngObserer {
   onPttEvent: (event: number, data: string, data1: number) => void;
@@ -319,7 +322,23 @@ export class GWSDKManager {
       let json = JSON.parse(data);
       let gwTempGroupNotifyBean: GWTempGroupNotifyBean = (json as GWTempGroupNotifyBean);
       if (gwTempGroupNotifyBean.name !== undefined && gwTempGroupNotifyBean.name !== '') {
-
+        CallManager.getInstance().checkCallStateSwitch(CallManager.CALL_STATE_PTT_TMP_GROUP_CALL).then((result) => {
+          if (result.interrupt) {
+            let pttparam = new PttCallParam(gwTempGroupNotifyBean.uid, gwTempGroupNotifyBean.name, GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER, false);
+            router.pushUrl({
+              url: 'pages/PttCall',
+              params: pttparam
+            })
+          }
+          else {
+            let uids:Uint32Array = new Uint32Array(1);
+            uids[0] = 0;
+            this.tempGroup(uids, 0);
+          }
+        });
+      }
+      else {
+        this.log('remote release tmp group');
       }
     }
     else if (event === GWType.GW_PTT_EVENT.GW_PTT_EVENT_DUPLEX) {

@@ -8,6 +8,8 @@ import { GWGroupListBean, GWRequestSpeakBean, GWSpeakNotifyBean, GWTempGroupBean
   GWType } from 'gwsdptt_sdk';
 import AppAbility from '../appability/AppAbility';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { CallManager } from '../service/CallManager';
+import call from '@ohos.telephony.call';
 
 @Entry
 @Component
@@ -114,14 +116,18 @@ struct PttCall {
       }
       else {
         this.viewItem = new TopView.ViewItem($r('app.string.title_temp_call'));
-        let uids:Uint32Array = new Uint32Array(1);
-        uids[0] = this.pttParam.pttId;
-        GWSDKManager.getInstance().tempGroup(uids, 1);
+        CallManager.getInstance().enterPttTmpGroupCall();
+        if (this.pttParam.pttCreate) {
+          let uids: Uint32Array = new Uint32Array(1);
+          uids[0] = this.pttParam.pttId;
+          GWSDKManager.getInstance().tempGroup(uids, 1);
+        }
       }
     }
   }
 
   aboutToDisappear(): void {
+    CallManager.getInstance().exitPttTmpGroupCall();
     if (this.pttParam.pttType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER) {
       let uids:Uint32Array = new Uint32Array(1);
       uids[0] = 0;

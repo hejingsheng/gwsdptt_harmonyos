@@ -39,6 +39,10 @@ export class NotificationService {
     this.videostr = context.resourceManager.getStringSync($r('app.string.chat_imtype_video'));
   }
 
+  public isForeground() : boolean {
+    return this.isAppForceground;
+  }
+
   public sendNotification(notifiDataBean: NotifiDataBean) {
     if (!this.isAppForceground || notifiDataBean.forceNotice) {
       this.log('app is background');
