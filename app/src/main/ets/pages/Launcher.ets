@@ -1,14 +1,22 @@
 import { router } from '@kit.ArkUI';
 import { abilityAccessCtrl, common, PermissionRequestResult, Permissions } from '@kit.AbilityKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import AppAbility from '../appability/AppAbility';
+import { notificationManager } from '@kit.NotificationKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
-const permissions: Array<Permissions> = ['ohos.permission.MICROPHONE','ohos.permission.MICROPHONE_CONTROL'];
+const permissions: Array<Permissions> = ['ohos.permission.MICROPHONE'];
 
 @Entry
 @Component
 struct Launcher {
   @State message: string = 'Hello World';
 
-  timer?:number;
+  private timer?:number;
+
+  private log(msg: string) {
+    hilog.info(0x0000, AppAbility.TAG, 'Launcher=%{public}s', msg);
+  }
 
   // 使用UIExtensionAbility：将common.UIAbilityContext 替换为common.UIExtensionContext
   private reqPermissionsFromUser(permissions: Array<Permissions>, context: common.UIAbilityContext): Promise<PermissionRequestResult> {
@@ -23,16 +31,44 @@ struct Launcher {
         .then((data) => {
           let grantStatus: Array<number> = data.authResults;
           let length: number = grantStatus.length;
+          let allow = true;
           for (let i = 0; i < length; i++) {
             if (grantStatus[i] === 0) {
               // 用户授权，可以继续访问目标操作
-              router.pushUrl({
-                url:'pages/Login'
-              })
+              allow = true;
             } else {
               // 用户拒绝授权，提示用户必须授权才能访问当前页面的功能，并引导用户到系统设置中打开相应的权限
-              return;
+              allow = false;
             }
+          }
+          if (allow) {
+            notificationManager.isNotificationEnabled().then((data: boolean) => {
+              if(!data){
+                notificationManager.requestEnableNotification(getContext(this) as common.UIAbilityContext).then(() => {
+                  router.pushUrl({
+                    url:'pages/Login'
+                  });
+                }).catch((err : BusinessError) => {
+                  if(1600004 == err.code){
+                    this.log('not allow send notification');
+                  } else {
+
+                  }
+                });
+              }
+              else {
+                router.pushUrl({
+                  url:'pages/Login'
+                });
+              }
+            }).catch((err : BusinessError) => {
+
+            });
+          }
+          else {
+            (getContext(this) as common.UIAbilityContext).terminateSelf().then((data)=>{
+              this.log('exit app');
+            });
           }
         })
       clearInterval(this.timer);

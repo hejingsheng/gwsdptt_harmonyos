@@ -1,8 +1,10 @@
 import { hilog } from '@kit.PerformanceAnalysisKit'
-import { promptAction, router } from '@kit.ArkUI'
+import { promptAction, router, window } from '@kit.ArkUI'
 import { GWSDKManager } from '../service/GWSDKManager'
 import { GWLoginResultBean, GWType } from 'gwsdptt_sdk'
 import { JSON } from '@kit.ArkTS';
+import { common } from '@kit.AbilityKit';
+import AppAbility from '../appability/AppAbility';
 
 @Component
 struct InputFloatHint{
@@ -71,6 +73,10 @@ struct Login {
   @State account: string = 'gwsd03';
   @State password: string = '111111';
 
+  private log(msg: string) {
+    hilog.info(0x0000, AppAbility.TAG, 'Login=%{public}s', msg);
+  }
+
   aboutToAppear(): void {
     GWSDKManager.getInstance().registerPttObserver({
       onPttEvent:(event: number, data: string, data1: number) => {
@@ -106,6 +112,13 @@ struct Login {
 
   aboutToDisappear(): void {
     GWSDKManager.getInstance().registerPttObserver(undefined);
+  }
+
+  onBackPress(): boolean | void {
+    (getContext(this) as common.UIAbilityContext).terminateSelf().then((data)=>{
+      this.log('exit app');
+    });
+    return true;
   }
 
   login() : void {

@@ -90,6 +90,7 @@ async function saveMsgContent(store: relationalStore.RdbStore, uid: string, msg:
   msgBean.senderType = msg.data.sendUType;
   msgBean.recvId = msg.data.receiveId;
   msgBean.recvNm = msg.data.receiveName;
+  msgBean.recvType = msg.data.receiveUType;
   msgBean.msgType = msg.data.msgType;
   let msgtype = msg.data.msgType;
   if (msgtype === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {

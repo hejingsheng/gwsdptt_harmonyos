@@ -215,6 +215,10 @@
     {
       "name": "permission_microphone",
       "value": "允许应用使用麦克风录音"
+    },
+    {
+      "name": "invite_to_voice_call",
+      "value": "邀请你语音通话"
     }
   ]
 }

@@ -23,6 +23,8 @@ import { OfflineEventBean } from './OfflineEventBean';
 import { MsgContentBean } from '../db/MsgContentBean';
 import { MsgConversationBean } from '../db/MsgConversationBean';
 import { MsgDB } from '../db/MsgDB';
+import { NotifiDataBean } from './NotifiDataBean';
+import { NotificationService } from './NotificationService';
 
 export interface GWSDKPttEngngObserer {
   onPttEvent: (event: number, data: string, data1: number) => void;
@@ -438,6 +440,15 @@ export class GWSDKManager {
                 .then((conv:MsgConversationBean) => {
                   this.context?.eventHub.emit('recvmsg', msg);
                   this.context?.eventHub.emit('recvconv', conv);
+                  // send notification
+                  let notifidata:NotifiDataBean = new NotifiDataBean();
+                  notifidata.sendNm = msg.senderNm;
+                  notifidata.recvNm = msg.recvNm;
+                  notifidata.recvId = msg.convId;
+                  notifidata.msgType = msg.msgType;
+                  notifidata.content = msg.content;
+                  notifidata.recvType = msg.recvType;
+                  NotificationService.getInstance().sendNotification(notifidata);
               });
           });
         }

@@ -215,6 +215,10 @@
     {
       "name": "permission_microphone",
       "value": "Allow the application to use a microphone in recording audio scenes."
+    },
+    {
+      "name": "invite_to_voice_call",
+      "value": "Invite you to voice call"
     }
   ]
 }

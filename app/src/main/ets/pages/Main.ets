@@ -75,6 +75,13 @@ struct Main {
     hilog.info(0x0000, 'GWAPP1', 'onPageHide');
   }
 
+  onBackPress(): boolean | void {
+    (getContext(this) as common.UIAbilityContext).windowStage.getMainWindowSync().minimize().then(()=>{
+      this.log('goto back');
+    });
+    return true;
+  }
+
   aboutToDisappear(): void {
     hilog.info(0x0000, 'GWAPP1', 'aboutToDisappear');
   }

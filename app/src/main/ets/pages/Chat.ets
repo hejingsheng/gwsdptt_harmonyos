@@ -342,7 +342,9 @@ struct Chat {
           })
         },
         onVoiceCall:() => {
-
+          router.pushUrl({
+            url: 'pages/comm_page/PhotoPicker'
+          })
         },
         onVideoCall:() => {
           promptAction.showToast({

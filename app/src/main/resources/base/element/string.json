@@ -215,6 +215,10 @@
     {
       "name": "local_equipment_speak",
       "value": "Local device speaking"
+    },
+    {
+      "name": "invite_to_voice_call",
+      "value": "Invite you to voice call"
     }
   ]
 }
