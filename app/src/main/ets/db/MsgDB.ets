@@ -199,7 +199,7 @@ async function queryChatRecord(store: relationalStore.RdbStore, uid: string, con
     .equalTo('CONV_ID', convId)
     .and()
     .equalTo('CONV_TYPE', convType)
-    .orderByAsc('TIME')
+    .orderByDesc('TIME')
     .offsetAs(pageNum*pageSize)
     .limitAs(pageSize)
   await store.query(predicates,['_id', 'LOGIN_UID', 'CONV_ID', 'CONV_TYPE', 'SENDER_ID',
@@ -231,6 +231,7 @@ async function queryChatRecord(store: relationalStore.RdbStore, uid: string, con
     .catch((err: BusinessError) => {
 
     });
+  msgList.reverse();
   return msgList;
 }
 

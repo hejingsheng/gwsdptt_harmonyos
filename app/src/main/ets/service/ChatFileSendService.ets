@@ -13,6 +13,7 @@ import { MsgDB } from "../db/MsgDB";
 import { MsgContentBean } from "../db/MsgContentBean";
 import { MsgConversationBean } from "../db/MsgConversationBean";
 import { copyFile } from '../utils/Utils';
+import { FILE_SERVER_ADDRESS } from "../config/ServerAddressConfig";
 
 @Concurrent
 async function fileUpload(fileUploadParam:ChatFileUploadParam): Promise<ChatFileUploadParam|null> {
@@ -46,7 +47,7 @@ async function fileUpload(fileUploadParam:ChatFileUploadParam): Promise<ChatFile
     };
   }
   const httpRequest = http.createHttp();
-  await httpRequest.request('http://120.46.155.150:5001/app/chat/msg/upload2',{
+  await httpRequest.request(FILE_SERVER_ADDRESS,{
     method:http.RequestMethod.POST,
     header:{
       'Content-Type': 'multipart/form-data',

@@ -31,12 +31,15 @@ const CHATTING_TIME_SPACE = 120;
 @Component
 struct Chat {
   @State chatMsgArr :Array<object> = [];
+  private msgArr :Array<ChatMsg> = [];
   @State viewItem: TopView.ViewItem = new TopView.ViewItem('');
+  @State isRefreshing: boolean = false;
   private chatparam :ChatParam = new ChatParam(0, 0, '');
   private chatlistScroller: Scroller = new Scroller();
   private timer:number = 0;
   private ctx:common.UIAbilityContext|undefined;
   private callfunc:boolean = false;
+  private currPage:number = 0;
 
   private log(msg: string) {
     hilog.info(0x0000, AppAbility.TAG, 'Chat=%{public}s', msg);
@@ -46,36 +49,40 @@ struct Chat {
     return GWSDKManager.getInstance().getUserInfo().id.toString();
   }
 
-  private addMessageList(msglist:MsgContentBean[]) {
+  private addMessageList(msglist:MsgContentBean[], first: boolean) {
     if (msglist.length > 0) {
       for (let msglistElement of msglist) {
+        this.msgArr.push(new ChatMsg(msglistElement.id, msglistElement.senderId, msglistElement.senderNm,
+          msglistElement.senderType, msglistElement.msgType, msglistElement.content,
+          msglistElement.url, msglistElement.thumburl, msglistElement.playtime, msglistElement.time));
+      }
+      this.msgArr.sort((a:ChatMsg, b:ChatMsg) => {
+        return a.time - b.time;
+      });
+      this.chatMsgArr.length = 0;
+      for (let msgArrElement of this.msgArr) {
         if (this.chatMsgArr.length === 0) {
-          this.chatMsgArr.push(new ChatTime(msglistElement.time));
-          this.chatMsgArr.push(new ChatMsg(msglistElement.id, msglistElement.senderId, msglistElement.senderNm,
-            msglistElement.senderType, msglistElement.msgType, msglistElement.content,
-            msglistElement.url, msglistElement.thumburl, msglistElement.playtime, msglistElement.time));
+          this.chatMsgArr.push(new ChatTime(msgArrElement.time));
+          this.chatMsgArr.push(msgArrElement);
         }
         else {
           let lastMsg = this.chatMsgArr[this.chatMsgArr.length-1] as ChatMsg;
-          if (msglistElement.time - lastMsg.time > CHATTING_TIME_SPACE) {
-            this.chatMsgArr.push(new ChatTime(msglistElement.time));
-            this.chatMsgArr.push(new ChatMsg(msglistElement.id, msglistElement.senderId, msglistElement.senderNm,
-              msglistElement.senderType, msglistElement.msgType, msglistElement.content,
-              msglistElement.url, msglistElement.thumburl, msglistElement.playtime, msglistElement.time));
+          if (msgArrElement.time - lastMsg.time > CHATTING_TIME_SPACE) {
+            this.chatMsgArr.push(new ChatTime(msgArrElement.time));
+            this.chatMsgArr.push(msgArrElement);
           }
           else {
-            this.chatMsgArr.push(new ChatMsg(msglistElement.id, msglistElement.senderId, msglistElement.senderNm,
-              msglistElement.senderType, msglistElement.msgType, msglistElement.content,
-              msglistElement.url, msglistElement.thumburl, msglistElement.playtime, msglistElement.time));
+            this.chatMsgArr.push(msgArrElement);
           }
         }
       }
+      if (first) {
+        this.timer = setInterval(() => {
+          this.chatlistScroller.scrollToIndex(this.chatMsgArr.length - 1, true, ScrollAlign.START);
+          clearInterval(this.timer)
+        }, 300);
+      }
     }
-    this.ctx = getContext(this) as common.UIAbilityContext;
-    this.ctx.eventHub.on('recvmsg', (msg: MsgContentBean) => {
-      MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.chatparam.convId, this.chatparam.convType);
-      this.addMessage(msg);
-    });
   }
 
   private addMessage(msg:MsgContentBean) {
@@ -104,20 +111,31 @@ struct Chat {
     }, 300);
   }
 
+  private loadData(first: boolean) {
+    MsgDB.getINSTANCE().queryChatRecord(this.getUid(), this.chatparam.convId, this.chatparam.convType, this.currPage, 30)
+      .then((list:MsgContentBean[]) => {
+        this.isRefreshing = false;
+        if (list.length === 0) {
+          this.log('have load all data');
+          return;
+        }
+        this.addMessageList(list, first);
+        this.currPage++;
+      });
+  }
+
   aboutToAppear(): void {
     if (router.getParams() != undefined && router.getParams() != null) {
       let param = router.getParams() as ChatParam;
       this.chatparam = param;
       this.viewItem = new TopView.ViewItem(this.chatparam.convNm)
     }
-    MsgDB.getINSTANCE().queryChatRecord(this.getUid(), this.chatparam.convId, this.chatparam.convType, 0, 30)
-      .then((list:MsgContentBean[]) => {
-        this.addMessageList(list);
-        this.timer = setInterval(()=>{
-          this.chatlistScroller.scrollToIndex(this.chatMsgArr.length-1, true, ScrollAlign.START);
-          clearInterval(this.timer)
-        }, 300);
-      });
+    this.loadData(true);
+    this.ctx = getContext(this) as common.UIAbilityContext;
+    this.ctx.eventHub.on('recvmsg', (msg: MsgContentBean) => {
+      MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.chatparam.convId, this.chatparam.convType);
+      this.addMessage(msg);
+    });
     MsgDB.getINSTANCE().updateConvRead(this.getUid(), this.chatparam.convId, this.chatparam.convType);
     this.callfunc = this.chatparam.convType === GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER?true:false;
   }
@@ -200,62 +218,65 @@ struct Chat {
           }
         })
         .expandSafeArea([SafeAreaType.KEYBOARD])
-      List({scroller: this.chatlistScroller, space: '5vp'}) {
-        ForEach(this.chatMsgArr, (item : object)=>{
-          ListItem() {
-            if (item instanceof ChatTime) {
-              Text(TimeUtils.formatDateTime(item.time*1000, 'YYYY-MM-DD HH:mm'))
-                .width('100%')
-                .height('auto')
-                .fontSize($r('app.float.text_size_small'))
-                .alignSelf(ItemAlign.Center)
-                .textAlign(TextAlign.Center)
-                .padding({
-                  top:'5vp',
-                  bottom:'5vp'
-                })
-                .fontColor($r('app.color.text_timer_color'))
-            } else {
-              if ((item as ChatMsg).senderId === this.getUid()) {
-                if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {
-                  ChatTxtToItemView({ sender: (item as ChatMsg).senderNm, content: (item as ChatMsg).content });
-                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO) {
-                  ChatVideoPhotoToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, video: false});
-                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO) {
-                  ChatVideoPhotoToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, thumburl: (item as ChatMsg).thumburl, video: true});
-                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE) {
-                  ChatVoiceToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url });
-                } else if ((item as ChatMsg).msgType === 0) {
-                  ChatAVCallToItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: false});
-                } else if ((item as ChatMsg).msgType === 1) {
-                  ChatAVCallToItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: true});
-                }
+      Refresh({ refreshing: $$this.isRefreshing }){
+        List({scroller: this.chatlistScroller, space: '5vp'}) {
+          ForEach(this.chatMsgArr, (item : object)=>{
+            ListItem() {
+              if (item instanceof ChatTime) {
+                Text(TimeUtils.formatDateTime(item.time*1000, 'YYYY-MM-DD HH:mm'))
+                  .width('100%')
+                  .height('auto')
+                  .fontSize($r('app.float.text_size_small'))
+                  .alignSelf(ItemAlign.Center)
+                  .textAlign(TextAlign.Center)
+                  .padding({
+                    top:'5vp',
+                    bottom:'5vp'
+                  })
+                  .fontColor($r('app.color.text_timer_color'))
               } else {
-                if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {
-                  ChatTxtFromItemView({ sender: (item as ChatMsg).senderNm, content: (item as ChatMsg).content });
-                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO) {
-                  ChatVideoPhotoFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, video: false});
-                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO) {
-                  ChatVideoPhotoFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, thumburl: (item as ChatMsg).thumburl, video: true});
-                } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE) {
-                  ChatVoiceFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url });
-                } else if ((item as ChatMsg).msgType === 0) {
-                  ChatAVCallFromItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: false});
-                } else if ((item as ChatMsg).msgType === 1) {
-                  ChatAVCallFromItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: true});
+                if ((item as ChatMsg).senderId === this.getUid()) {
+                  if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {
+                    ChatTxtToItemView({ sender: (item as ChatMsg).senderNm, content: (item as ChatMsg).content });
+                  } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO) {
+                    ChatVideoPhotoToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, video: false});
+                  } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO) {
+                    ChatVideoPhotoToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, thumburl: (item as ChatMsg).thumburl, video: true});
+                  } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE) {
+                    ChatVoiceToItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url });
+                  } else if ((item as ChatMsg).msgType === 0) {
+                    ChatAVCallToItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: false});
+                  } else if ((item as ChatMsg).msgType === 1) {
+                    ChatAVCallToItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: true});
+                  }
+                } else {
+                  if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_TEXT) {
+                    ChatTxtFromItemView({ sender: (item as ChatMsg).senderNm, content: (item as ChatMsg).content });
+                  } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_PHOTO) {
+                    ChatVideoPhotoFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, video: false});
+                  } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VIDEO) {
+                    ChatVideoPhotoFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url, thumburl: (item as ChatMsg).thumburl, video: true});
+                  } else if ((item as ChatMsg).msgType === GWType.GW_MSG_TYPE.GW_PTT_MSG_TYPE_VOICE) {
+                    ChatVoiceFromItemView({ sender: (item as ChatMsg).senderNm, url: (item as ChatMsg).url });
+                  } else if ((item as ChatMsg).msgType === 0) {
+                    ChatAVCallFromItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: false});
+                  } else if ((item as ChatMsg).msgType === 1) {
+                    ChatAVCallFromItemView({ sender: (item as ChatMsg).senderNm, time: (item as ChatMsg).content, video: true});
+                  }
                 }
               }
             }
-          }
-        },(item: object) => {
-          if (item instanceof ChatTime) {
-            let a = item as ChatTime;
-            return a.id+'_'+a.time
-          } else {
-            let a = item as ChatMsg;
-            return a.id.toString();
-          }
-        })
+          },(item: object) => {
+            if (item instanceof ChatTime) {
+              let a = item as ChatTime;
+              return a.id+'_'+a.time
+            } else {
+              let a = item as ChatMsg;
+              return a.id.toString();
+            }
+          })
+        }
+        .edgeEffect(EdgeEffect.Fade)
       }
       .width('100%')
       .alignRules({
@@ -268,7 +289,9 @@ struct Chat {
           align: VerticalAlign.Top
         }
       })
-      .edgeEffect(EdgeEffect.Fade)
+      .onRefreshing(()=>{
+        this.loadData(false);
+      })
       ChatInputView({showCall: this.callfunc, inputViewEvent: {
         onStartVoice:() => {
 

@@ -5,6 +5,7 @@ import { GWLoginResultBean, GWType } from 'gwsdptt_sdk'
 import { JSON } from '@kit.ArkTS';
 import { common } from '@kit.AbilityKit';
 import AppAbility from '../appability/AppAbility';
+import { getDeviceIccid, getDeviceImei } from '../config/DeviceConfig';
 
 @Component
 struct InputFloatHint{
@@ -70,8 +71,8 @@ struct InputFloatHint{
 @Entry
 @Component
 struct Login {
-  @State account: string = 'gwsd03';
-  @State password: string = '111111';
+  @State account: string = '';
+  @State password: string = '';
 
   private log(msg: string) {
     hilog.info(0x0000, AppAbility.TAG, 'Login=%{public}s', msg);
@@ -122,7 +123,9 @@ struct Login {
   }
 
   login() : void {
-    GWSDKManager.getInstance().login(this.account, this.password, '12345', '54321');
+    let imei = getDeviceImei();
+    let iccid = getDeviceIccid();
+    GWSDKManager.getInstance().login(this.account, this.password, imei, iccid);
   }
 
   build() {

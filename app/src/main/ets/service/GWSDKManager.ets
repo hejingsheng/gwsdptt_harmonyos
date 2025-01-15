@@ -28,6 +28,13 @@ import { NotificationService } from './NotificationService';
 import { CallManager } from './CallManager';
 import { router } from '@kit.ArkUI';
 import { AudioCallParam, PttCallParam } from './CallParam';
+import { getDeviceBattery, getDeviceNetwork } from '../config/DeviceConfig';
+import {
+  DISPATCH_SERVER_ADDRESS,
+  DISPATCH_SERVER_PORT,
+  MSG_SERVER_ADDRESS,
+  MSG_SERVER_PORT,
+  PTT_SERVER_ADDRESS, PTT_SERVER_PORT } from '../config/ServerAddressConfig';
 
 export interface GWSDKPttEngngObserer {
   onPttEvent: (event: number, data: string, data1: number) => void;
@@ -59,10 +66,9 @@ export class GWSDKManager {
 
   private constructor() {
     gwsdPttSdk.pttInit(this.onPttEvent.bind(this), this.onMsgEvent.bind(this));
-    gwsdPttSdk.pttConfigServer(0, '43.250.33.13', 23003);
-    gwsdPttSdk.pttConfigServer(1, '43.250.33.13', 51883);
-    gwsdPttSdk.pttConfigServer(2, '123.60.212.171', 50001);
-    //this.log('current sdk version:'+gwsdPttSdk.pttGetVersion());
+    gwsdPttSdk.pttConfigServer(0, PTT_SERVER_ADDRESS, PTT_SERVER_PORT);
+    gwsdPttSdk.pttConfigServer(1, MSG_SERVER_ADDRESS, MSG_SERVER_PORT);
+    gwsdPttSdk.pttConfigServer(2, DISPATCH_SERVER_ADDRESS, DISPATCH_SERVER_PORT);
     this.userInfo = new GWPttUserInfo();
   }
 
@@ -241,7 +247,7 @@ export class GWSDKManager {
         this.userInfo!.call = gwLoginResultBean.call as boolean;
         this.userInfo!.video = gwLoginResultBean.video as boolean;
         this.userInfo!.silent = gwLoginResultBean.silent as boolean;
-        gwsdPttSdk.pttHeart(100, '5g');
+        gwsdPttSdk.pttHeart(getDeviceBattery(), getDeviceNetwork());
         this.startTimer();
         this.queryGroup();
       }
@@ -517,7 +523,7 @@ export class GWSDKManager {
   private timerId:number = 0;
   private startTimer() {
     this.timerId = setInterval(() => {
-      gwsdPttSdk.pttHeart(100, '5g');
+      gwsdPttSdk.pttHeart(getDeviceBattery(), getDeviceNetwork());
     }, 50*1000);
   }
 
