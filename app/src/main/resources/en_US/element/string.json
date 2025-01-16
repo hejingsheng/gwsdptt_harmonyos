@@ -219,6 +219,14 @@
     {
       "name": "invite_to_voice_call",
       "value": "Invite you to voice call"
+    },
+    {
+      "name": "hint_talkback_state_hanup",
+      "value": "Hang up..."
+    },
+    {
+      "name": "hint_talkback_state_opposite_hangup",
+      "value": "Call ended by the other party..."
     }
   ]
 }

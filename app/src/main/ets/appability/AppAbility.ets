@@ -6,6 +6,7 @@ import { GWSDKManager } from '../service/GWSDKManager';
 import { DBManager } from '../db/DBManager';
 import { NotificationService } from '../service/NotificationService';
 import { ChatParam } from '../service/ChatModel';
+import { AudioCallParam } from '../service/CallParam';
 
 export default class AppAbility extends UIAbility {
 
@@ -32,7 +33,11 @@ export default class AppAbility extends UIAbility {
         });
       }
       else if (type === 'VoiceCall') {
-
+        let audioCallparam = new AudioCallParam(param['remoteid'] as number, param['remotenm'] as string, false);
+        router.pushUrl({
+          url: 'pages/AudioCall',
+          params: audioCallparam
+        })
       }
     }
   }

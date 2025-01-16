@@ -35,6 +35,7 @@ import {
   MSG_SERVER_ADDRESS,
   MSG_SERVER_PORT,
   PTT_SERVER_ADDRESS, PTT_SERVER_PORT } from '../config/ServerAddressConfig';
+import call from '@ohos.telephony.call';
 
 export interface GWSDKPttEngngObserer {
   onPttEvent: (event: number, data: string, data1: number) => void;
@@ -360,6 +361,7 @@ export class GWSDKManager {
                 notifiDataBean.recvNm = gwDuplexBean.name;
                 notifiDataBean.recvId = gwDuplexBean.uid;
                 notifiDataBean.type = NotifiDataBean.NOTIFI_TYPE_AUDIO_CALL;
+                NotificationService.getInstance().sendNotification(notifiDataBean);
               }
               else {
                 if (data.interrupt) {
@@ -389,14 +391,19 @@ export class GWSDKManager {
                   notifiDataBean.recvId = gwDuplexBean.uid;
                   notifiDataBean.type = NotifiDataBean.NOTIFI_TYPE_AUDIO_CALL;
                   notifiDataBean.forceNotice = true;
-
+                  NotificationService.getInstance().sendNotification(notifiDataBean);
                 }
               }
             });
           }
         }
         else if (gwDuplexBean.status === GWType.GW_DUPLEX_STATUS.GW_PTT_DUPLEX_STATUS_END) {
-
+          if (CallManager.getInstance().getCallState() !== CallManager.CALL_STATE_AUDIO_VIDEO_CALL) {
+            let notifiDataBean = new NotifiDataBean();
+            notifiDataBean.type = NotifiDataBean.NOTIFI_TYPE_CALL_END;
+            notifiDataBean.forceNotice = true;
+            NotificationService.getInstance().sendNotification(notifiDataBean);
+          }
         }
       }
     }

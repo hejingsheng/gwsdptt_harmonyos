@@ -25,6 +25,9 @@ export class NotificationService {
   private imagestr:string = '';
   private voicestr:string = '';
   private videostr:string = '';
+  private invitevoicecall:string = '';
+  private hangupcall:string = '';
+  private remotehangup:string = '';
   public init(context: common.UIAbilityContext) {
     context.windowStage.on('windowStageEvent', (data) => {
       if (data === window.WindowStageEventType.SHOWN || data === window.WindowStageEventType.ACTIVE) {
@@ -37,6 +40,9 @@ export class NotificationService {
     this.imagestr = context.resourceManager.getStringSync($r('app.string.chat_imtype_img'));
     this.voicestr = context.resourceManager.getStringSync($r('app.string.chat_imtype_voice'));
     this.videostr = context.resourceManager.getStringSync($r('app.string.chat_imtype_video'));
+    this.invitevoicecall = context.resourceManager.getStringSync($r('app.string.invite_to_voice_call'));
+    this.hangupcall = context.resourceManager.getStringSync($r('app.string.hint_talkback_state_hanup'));
+    this.remotehangup = context.resourceManager.getStringSync($r('app.string.hint_talkback_state_opposite_hangup'));
   }
 
   public isForeground() : boolean {
@@ -58,6 +64,7 @@ export class NotificationService {
     let content:string = '';
     let convNm = '';
     let type = notifiDataBean.type;
+    let extraInfos: Record<string, Object> = {};
     if (type === NotifiDataBean.NOTIFI_TYPE_MSG) {
       if (notifiDataBean.recvType == GWType.GW_MSG_RECV_TYPE.GW_PTT_MSG_RECV_TYPE_USER) {
         title = notifiDataBean.sendNm
@@ -88,9 +95,32 @@ export class NotificationService {
         }
         convNm = notifiDataBean.recvNm;
       }
+      extraInfos = {
+        'type': 'Msg',
+        'convId': notifiDataBean.recvId,
+        'convNm': convNm,
+        'convType': notifiDataBean.recvType
+      };
     }
     else {
       // audio video call
+      let remoteid = notifiDataBean.recvId;
+      let remoteidStr = notifiDataBean.recvIdStr;
+      let remotenm = notifiDataBean.recvNm;
+      let record = notifiDataBean.record;
+      title = remotenm;
+      if (type === NotifiDataBean.NOTIFI_TYPE_AUDIO_CALL) {
+        content = this.invitevoicecall;
+        extraInfos = {
+          'type': 'VoiceCall',
+          'remoteid': remoteid,
+          'remotenm': remotenm,
+        };
+      }
+      else {
+        title = this.hangupcall;
+        content = this.remotehangup;
+      }
     }
     this.log('send notice');
     let wantAgentObj: WantAgent|undefined = undefined;
@@ -105,12 +135,7 @@ export class NotificationService {
         ],
         actionType: wantAgent.OperationType.START_ABILITY,
         requestCode: 100,
-        extraInfo: {
-          'type': 'Msg',
-          'convId': notifiDataBean.recvId,
-          'convNm': convNm,
-          'convType': notifiDataBean.recvType
-        }
+        extraInfos: extraInfos
       }
       wantAgentObj = await wantAgent.getWantAgent(wantAgentInfo);
       autoDeletedTime = undefined;

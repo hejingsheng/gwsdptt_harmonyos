@@ -219,6 +219,14 @@
     {
       "name": "invite_to_voice_call",
       "value": "邀请你语音通话"
+    },
+    {
+      "name": "hint_talkback_state_hanup",
+      "value": "挂断..."
+    },
+    {
+      "name": "hint_talkback_state_opposite_hangup",
+      "value": "对方已挂断..."
     }
   ]
 }
