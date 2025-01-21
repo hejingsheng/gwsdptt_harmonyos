@@ -40,7 +40,7 @@ async function fileUpload(fileUploadParam:ChatFileUploadParam): Promise<ChatFile
     filePath: uri,
   };
   if (thumburi !== '') {
-    multdata[0] = {
+    multdata[1] = {
       name:'file2',
       contentType: 'image/jpg',
       filePath: thumburi,
@@ -74,8 +74,10 @@ async function fileUpload(fileUploadParam:ChatFileUploadParam): Promise<ChatFile
       } else {
       }
     } catch (e) {
+      console.log('err1')
     }
   }).catch((err: BusinessError) => {
+    console.log('err')
   });
   return upload;
 }
@@ -95,10 +97,18 @@ export class ChatFileSendService {
   private constructor() {
   }
 
-  public async sendMediaFile(chatFileMsgParam:ChatFileMsgParam, context: common.UIAbilityContext) {
+  public async sendMediaFile(chatFileMsgParam:ChatFileMsgParam, copy:boolean, context: common.UIAbilityContext) {
     this.log('sendMediaFile1');
-    let fileUploadParam:ChatFileUploadParam = new ChatFileUploadParam(copyFile(chatFileMsgParam.filepath, context),
-      chatFileMsgParam.filetype, copyFile(chatFileMsgParam.filepathThumb, context));
+    let fileUploadParam: ChatFileUploadParam|undefined = undefined;
+    if (copy) {
+      let str = copyFile(chatFileMsgParam.filepath, context);
+      let str1 = copyFile(chatFileMsgParam.filepathThumb, context);
+      fileUploadParam = new ChatFileUploadParam(str, chatFileMsgParam.filetype, str1);
+    }
+    else {
+      fileUploadParam = new ChatFileUploadParam(chatFileMsgParam.filepath,
+        chatFileMsgParam.filetype, chatFileMsgParam.filepathThumb);
+    }
     let fileUploadTask: taskpool.Task = new taskpool.Task(fileUpload, fileUploadParam);
     this.log('sendMediaFile2');
     await taskpool.execute(fileUploadTask).then((res: object) => {

@@ -24,6 +24,7 @@ import { JSON } from '@kit.ArkTS';
 import AppAbility from '../appability/AppAbility';
 import { ChatFileSendService } from '../service/ChatFileSendService';
 import { AudioCallParam, PttCallParam } from '../service/CallParam';
+import AudioRecorder  from '../utils/RecordUtils';
 
 const CHATTING_TIME_SPACE = 120;
 
@@ -34,6 +35,8 @@ struct Chat {
   private msgArr :Array<ChatMsg> = [];
   @State viewItem: TopView.ViewItem = new TopView.ViewItem('');
   @State isRefreshing: boolean = false;
+  @State isRecording: boolean = false;
+  @State recordAnimalState:AnimationStatus = AnimationStatus.Stopped;
   private chatparam :ChatParam = new ChatParam(0, 0, '');
   private chatlistScroller: Scroller = new Scroller();
   private timer:number = 0;
@@ -141,7 +144,7 @@ struct Chat {
   }
 
   private async openPhotoPicker() : Promise<ChatFileSelectParam> {
-    let selectFile:ChatFileSelectParam = new ChatFileSelectParam('', -1);
+    let selectFile:ChatFileSelectParam = new ChatFileSelectParam('', -1, true);
     try {
       let PhotoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
       PhotoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
@@ -197,7 +200,7 @@ struct Chat {
       return;
     }
     this.log('start file send task');
-    ChatFileSendService.getINSTANCE().sendMediaFile(chatFileMsgParam, this.ctx!);
+    ChatFileSendService.getINSTANCE().sendMediaFile(chatFileMsgParam, selectFile.copy, this.ctx!);
   }
 
   build() {
@@ -294,13 +297,26 @@ struct Chat {
       })
       ChatInputView({showCall: this.callfunc, inputViewEvent: {
         onStartVoice:() => {
-
+          AudioRecorder.createAndSetFd().then(()=>{
+            AudioRecorder.startRecordingProcess();
+          });
+          this.recordAnimalState = AnimationStatus.Running;
+          this.isRecording = true;
         },
         onStopVoice:() => {
-
+          AudioRecorder.stopRecordingProcess().then((value:string)=>{
+            let selectFile:ChatFileSelectParam = new ChatFileSelectParam('', -1, false);
+            selectFile.filepath = value;
+            selectFile.filetype = ChatFileMsgParam.VOICE_FILE_TYPE;
+            this.handleFileSend(selectFile);
+          })
+          this.recordAnimalState = AnimationStatus.Stopped;
+          this.isRecording = false;
         },
         onCancelVoice:() => {
-
+          AudioRecorder.stopRecordingProcess();
+          this.recordAnimalState = AnimationStatus.Stopped;
+          this.isRecording = false;
         },
         onSendTxt: (value: string) => {
           if (!GWSDKManager.getInstance().hasMsgPermission()) {
@@ -386,6 +402,38 @@ struct Chat {
             anchor: "__container__",
             align: VerticalAlign.Bottom
           }
+        })
+      ImageAnimator()
+        .images([
+          {
+            src: $r('app.media.microphone1'),
+            duration: 300
+          },
+          {
+            src: $r('app.media.microphone2'),
+            duration: 300
+          },
+          {
+            src: $r('app.media.microphone3'),
+            duration: 300
+          },
+          {
+            src: $r('app.media.microphone4'),
+            duration: 300
+          },
+          {
+            src: $r('app.media.microphone5'),
+            duration: 300
+          }
+        ])
+        .width('190vp')
+        .height('300vp')
+        .state(this.recordAnimalState).reverse(false)
+        .fillMode(FillMode.None).iterations(-1)
+        .visibility(this.isRecording?Visibility.Visible:Visibility.Hidden)
+        .alignRules({
+          center: { anchor: '__container__', align: VerticalAlign.Center },
+          middle: { anchor: '__container__', align: HorizontalAlign.Center }
         })
     }
     .height('100%')

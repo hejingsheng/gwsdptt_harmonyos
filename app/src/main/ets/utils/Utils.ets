@@ -25,7 +25,7 @@ export function copyFile(uri: string, context: common.UIAbilityContext) : string
   }
   let srcfile = fs.openSync(uri,fs.OpenMode.READ_ONLY);
   let filename = srcfile.name;
-  let fileTemp = fs.openSync(context.filesDir+filename,fs.OpenMode.READ_WRITE|fs.OpenMode.CREATE);
+  let fileTemp = fs.openSync(context.filesDir+'/'+filename,fs.OpenMode.READ_WRITE|fs.OpenMode.CREATE);
   let dstfileuri = fileTemp.path;
   fs.copyFileSync(srcfile.fd,fileTemp.fd);
   fs.closeSync(srcfile);

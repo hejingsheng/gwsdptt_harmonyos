@@ -1,3 +1,5 @@
+import { AudioPlayer } from "../utils/PlayUtils";
+
 @Preview({
   title:'ChatVoiceToItemView'
 })
@@ -32,6 +34,7 @@ export struct ChatVoiceToItemView {
           })
           .onClick(()=>{
             // play voice
+            AudioPlayer.getInstance().avPlayerLive(this.url);
           })
       }
       .alignItems(HorizontalAlign.End)

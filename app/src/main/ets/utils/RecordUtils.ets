@@ -1,15 +1,15 @@
 import { media } from '@kit.MediaKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { BusinessError, systemDateTime } from '@kit.BasicServicesKit';
 import fs from '@ohos.file.fs';
 
-export class AudioRecorderDemo {
+class AudioRecorder {
   private avRecorder: media.AVRecorder | undefined = undefined;
   private avProfile: media.AVRecorderProfile = {
-    audioBitrate: 100000, // 音频比特率
+    audioBitrate: 128000, // 音频比特率
     audioChannels: 2, // 音频声道数
-    audioCodec: media.CodecMimeType.AUDIO_MP3, // 音频编码格式，当前支持ACC，MP3，G711MU
-    audioSampleRate: 48000, // 音频采样率
-    fileFormat: media.ContainerFormatType.CFT_MP3, // 封装格式，当前支持MP4，M4A，MP3，WAV
+    audioCodec: media.CodecMimeType.AUDIO_AAC, // 音频编码格式，当前支持ACC，MP3，G711MU
+    audioSampleRate: 16000, // 音频采样率
+    fileFormat: media.ContainerFormatType.CFT_MPEG_4A, // 封装格式，当前支持MP4，M4A，MP3，WAV
   };
   private avConfig: media.AVRecorderConfig = {
     audioSourceType: media.AudioSourceType.AUDIO_SOURCE_TYPE_MIC, // 音频输入源，这里设置为麦克风
@@ -18,13 +18,15 @@ export class AudioRecorderDemo {
   };
   private uriPath: string = '';
   private filePath: string = '';
+  private audioFile: fs.File|undefined;
 
   // 创建文件以及设置avConfig.url
   async createAndSetFd(): Promise<void> {
     const context: Context = getContext(this);
-    const path: string = context.filesDir + '/example.mp3'; // 文件沙箱路径，文件后缀名应与封装格式对应
-    const audioFile: fs.File = fs.openSync(path, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
-    this.avConfig.url = 'fd://' + audioFile.fd; // 更新url
+    const filename = systemDateTime.getTime(false);
+    const path: string = context.filesDir + '/' + filename + '.mp3'; // 文件沙箱路径，文件后缀名应与封装格式对应
+    this.audioFile = fs.openSync(path, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
+    this.avConfig.url = 'fd://' + this.audioFile.fd; // 更新url
     this.filePath = path;
   }
 
@@ -74,7 +76,7 @@ export class AudioRecorderDemo {
   }
 
   // 停止录制对应的流程
-  async stopRecordingProcess() {
+  async stopRecordingProcess() : Promise<string> {
     if (this.avRecorder != undefined) {
       // 1. 停止录制
       if (this.avRecorder.state === 'started'
@@ -87,15 +89,20 @@ export class AudioRecorderDemo {
       await this.avRecorder.release();
       this.avRecorder = undefined;
       // 4.关闭录制文件fd
+      fs.closeSync(this.audioFile);
+      return this.filePath;
     }
+    return '';
   }
 
-  // 一个完整的【开始录制-暂停录制-恢复录制-停止录制】示例
-  async audioRecorderDemo() {
-    await this.startRecordingProcess(); // 开始录制
-    // 用户此处可以自行设置录制时长，例如通过设置休眠阻止代码执行
-    await this.pauseRecordingProcess(); //暂停录制
-    await this.resumeRecordingProcess(); // 恢复录制
-    await this.stopRecordingProcess(); // 停止录制
-  }
+  // // 一个完整的【开始录制-暂停录制-恢复录制-停止录制】示例
+  // async audioRecorderDemo() {
+  //   await this.startRecordingProcess(); // 开始录制
+  //   // 用户此处可以自行设置录制时长，例如通过设置休眠阻止代码执行
+  //   await this.pauseRecordingProcess(); //暂停录制
+  //   await this.resumeRecordingProcess(); // 恢复录制
+  //   await this.stopRecordingProcess(); // 停止录制
+  // }
 }
+
+export default new AudioRecorder()

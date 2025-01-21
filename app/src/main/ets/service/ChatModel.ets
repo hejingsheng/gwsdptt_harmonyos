@@ -24,10 +24,12 @@ export class ChatTime {
 export class ChatFileSelectParam {
   public filepath:string;
   public filetype:number;
+  public copy:boolean;
 
-  constructor(filepath: string, filetype: number) {
+  constructor(filepath: string, filetype: number, copy: boolean) {
     this.filepath = filepath;
     this.filetype = filetype;
+    this.copy = copy;
   }
 }
 
