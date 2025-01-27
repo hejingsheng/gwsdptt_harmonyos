@@ -53,8 +53,8 @@ export struct ChatVoiceFromItemView {
           ])
           .state(this.voiceAnim).reverse(false)
           .fillMode(FillMode.None).iterations(-1)
-          .width(150)
-          .height(50)
+          .width($r('app.float.chat_voice_item_width'))
+          .height($r('app.float.chat_voice_item_height'))
           .alignRules({
             center: { anchor: '__container__', align: VerticalAlign.Center },
             middle: { anchor: '__container__', align: HorizontalAlign.Center }

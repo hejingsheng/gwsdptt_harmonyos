@@ -6,6 +6,8 @@ import { AudioPlayer } from "../utils/PlayUtils";
 
 @Component
 export struct ChatVoiceToItemView {
+  @State voiceAnim:AnimationStatus = AnimationStatus.Initial;
+  private playing:boolean = false;
   private sender:string = 'user';
   private url: string = '';
 
@@ -19,22 +21,67 @@ export struct ChatVoiceToItemView {
           .margin({
             right: '3vp'
           })
-        Image($r('app.media.ic_msg_voice_me'))
+        ImageAnimator()
+          .images([
+            {
+              src: $r('app.media.ic_msg_voice_me03'),
+              width:5,
+              height:5,
+              duration: 100
+            },
+            {
+              src: $r('app.media.ic_msg_voice_me01'),
+              width:5,
+              height:5,
+              duration: 300
+            },
+            {
+              src: $r('app.media.ic_msg_voice_me02'),
+              width:5,
+              height:5,
+              duration: 300
+            },
+            {
+              src: $r('app.media.ic_msg_voice_me03'),
+              width:5,
+              height:5,
+              duration: 300
+            }
+          ])
+          .state(this.voiceAnim).reverse(false)
+          .fillMode(FillMode.None).iterations(-1)
           .width($r('app.float.chat_voice_item_width'))
           .height($r('app.float.chat_voice_item_height'))
-          .objectFit(ImageFit.Contain)
+          .alignRules({
+            center: { anchor: '__container__', align: VerticalAlign.Center },
+            middle: { anchor: '__container__', align: HorizontalAlign.Center }
+          })
           .backgroundColor($r('app.color.chat_txt_to_bg_color'))
           .clip(true)
           .borderRadius(5)
           .padding({
-            left:'45vp'
+            right:'45vp'
           })
           .margin({
             left: '5vp'
           })
           .onClick(()=>{
             // play voice
-            AudioPlayer.getInstance().avPlayerLive(this.url);
+            if (this.playing) {
+              AudioPlayer.getInstance().avPlayerStop();
+              this.voiceAnim = AnimationStatus.Stopped;
+            }
+            else {
+              AudioPlayer.getInstance().avPlayerLive(this.url, (state: number) => {
+                if (state == 1) {
+                  this.voiceAnim = AnimationStatus.Stopped;
+                  this.playing = false;
+                } else {
+                  this.voiceAnim = AnimationStatus.Running;
+                  this.playing = true;
+                }
+              });
+            }
           })
       }
       .alignItems(HorizontalAlign.End)
