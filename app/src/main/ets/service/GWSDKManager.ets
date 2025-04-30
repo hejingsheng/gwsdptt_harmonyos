@@ -222,7 +222,7 @@ export class GWSDKManager {
       content = msg.data.url;
     }
     gwsdPttSdk.pttSendMsg(this.userInfo.id, this.userInfo.name, msg.data.receiveUType, parseInt(msg.data.receiveId),
-      msg.data.receiveName, msg.type, content, msg.data.thumbUrl, 0, '', 0, ts, 1, 1);
+      msg.data.receiveName, msg.type, content, msg.data.thumbUrl, ts, 1);
   }
 
   public getGroupList() : List<GWGroupBean> {
@@ -442,19 +442,7 @@ export class GWSDKManager {
     else if (event == GWType.GW_PTT_EVENT.GW_PTT_EVENT_LOSTMIC) {
       this.log("speak too long time stop record");
     }
-    else if (event == GWType.GW_PTT_EVENT.GW_PTT_EVENT_GROUP_OPERATE) {
-
-    }
     else if (event == GWType.GW_PTT_EVENT.GW_PTT_EVENT_QUERY_DISPATCH) {
-
-    }
-    else if (event == GWType.GW_PTT_EVENT.GW_PTT_EVENT_FRIEND_OPERATE) {
-
-    }
-    else if (event == GWType.GW_PTT_EVENT.GW_PTT_EVENT_QUERY_CHAT_GRP) {
-
-    }
-    else if (event == GWType.GW_PTT_EVENT.GW_PTT_EVENT_CHAT_GRP_DETAIL) {
 
     }
     else {
